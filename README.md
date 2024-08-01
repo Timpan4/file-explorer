@@ -12,16 +12,16 @@ This project aims to create a file explorer application using Tauri. The primary
 - [Development](#development)
 
 ## Features
-- Browse and manage files and directories
+- Browse and manage files and directories. To come.
 - Cross-platform support (Windows, macOS, Linux), To come. Windows support is the primary target first.
 - File operations (create, delete, rename, copy, move). To come.
 - File previews (image, video, audio, text, PDF, etc.). To come.
 - File search. To come.
 - File sorting. To come.
-- File properties.
-- Tabs 
-- Home view
-- Lightweight and fast
+- File properties. To come.
+- Tabs. To come.
+- Home view. To come.
+- Lightweight and fast. To come.
 
 ## Installation
 
