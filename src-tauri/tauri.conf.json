@@ -1,7 +1,7 @@
 {
   "productName": "file-explorer",
   "version": "0.0.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "me.example.file-explorer",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",

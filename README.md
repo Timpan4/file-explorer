@@ -1,16 +1,71 @@
-# Tauri + Vue + TypeScript
+# Tauri File Explorer
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## Overview
+This project aims to create a file explorer application using Tauri. The primary goal is to learn Rust and explore desktop development.
 
-## Recommended IDE Setup
+**Note:** This project is still in development and is not yet ready for use.
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## Table of Contents
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Development](#development)
 
-## Type Support For `.vue` Imports in TS
+## Features
+- Browse and manage files and directories
+- Cross-platform support (Windows, macOS, Linux), To come. Windows support is the primary target first.
+- File operations (create, delete, rename, copy, move). To come.
+- File previews (image, video, audio, text, PDF, etc.). To come.
+- File search. To come.
+- File sorting. To come.
+- File properties.
+- Tabs 
+- Home view
+- Lightweight and fast
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's Take Over mode by following these steps:
+## Installation
 
-1. Run `Extensions: Show Built-in Extensions` from VS Code's command palette, look for `TypeScript and JavaScript Language Features`, then right click and select `Disable (Workspace)`. By default, Take Over mode will enable itself if the default TypeScript extension is disabled.
-2. Reload the VS Code window by running `Developer: Reload Window` from the command palette.
+### Prerequisites
+- [Rust](https://www.rust-lang.org/)
+- [Node.js](https://nodejs.org/)
+- [Tauri CLI](https://tauri.app/v1/guides/getting-started/prerequisites)
+- [Bun](https://bun.sh/)
 
-You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/volar/discussions/471).
+### Clone the repository
+```sh
+git clone https://github.com/yourusername/tauri-file-explorer.git
+cd tauri-file-explorer
+```
+
+### Setup
+Install dependencies
+```sh
+bun install
+```
+
+Run the development server
+```sh
+bun tauri dev
+```
+### Usage
+After running the development server, the application will open. You can explore the current directory, navigate through folders, and perform file operations.
+
+Development
+Project Structure
+```
+.
+├── src/              # Rust source files
+├── src-tauri/        # Tauri configuration and Rust backend
+├── public/           # Public assets
+├── package.json      # Project configuration and dependencies
+└── README.md         # Project documentation
+```
+
+### Building the project
+```sh
+bun tauri build
+```
+The build artifacts will be located in the src-tauri/target directory.
+
+### Contributing
+Contributions are welcome! Please fork the repository and submit a pull request.
