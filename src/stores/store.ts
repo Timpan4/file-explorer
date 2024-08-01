@@ -16,9 +16,7 @@ export const useDirectoryStore = defineStore('directory', () => {
 
   async function getDirectory(path: string) {
       console.log("getDirectory", path);
-      const result = await invoke<DirectoryItem[]>("get_directory", {path: path || currentDirectory.value});
-      console.table(result);
-      currentDirectoryItems.value = result;
+      currentDirectoryItems.value = await invoke<DirectoryItem[]>("get_directory", {path: path || currentDirectory.value});
   }
   return {
       currentDirectory,
