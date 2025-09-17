@@ -1,5 +1,4 @@
-import {createRouter, createWebHistory} from "vue-router";
-
+import { createRouter, createWebHistory } from "vue-router";
 
 import VolumeList from "./components/volumes/VolumeList.vue";
 import DirectoryList from "./components/directories/DirectoryList.vue";
@@ -9,7 +8,7 @@ const routes = [
     path: "/",
     component: VolumeList,
   },
-    {
+  {
     path: "/files",
     component: DirectoryList,
   },
