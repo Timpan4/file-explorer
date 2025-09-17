@@ -36,6 +36,8 @@ bun tauri dev
 
 This will start the Vite development server for the frontend and build and run the Tauri application.
 
+**Note:** The user is running the application on the side, so there is no need to run it manually.
+
 ### Building
 
 To build the application for production, use the following command:

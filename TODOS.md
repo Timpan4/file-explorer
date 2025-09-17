@@ -61,7 +61,7 @@ This file outlines the recommended to-do items for the Tauri File Explorer proje
 
 ## Known Issues
 
-*   [ ] **State Persistence on Refresh**: The application state is not saved and restored on page refresh. When the user presses F5, the application resets to a blank screen. The current directory path should be persisted, either in the URL or in `localStorage`, to restore the state properly.
+*   [x] **State Persistence on Refresh**: The application state is not saved and restored on page refresh. When the user presses F5, the application resets to a blank screen. The current directory path should be persisted, either in the URL or in `localStorage`, to restore the state properly.
 *   [ ] **URL Doesn't Reflect Current Directory**: The URL does not update to reflect the current directory path. This prevents bookmarking and direct navigation to specific directories. The router should be updated to include the current path (e.g., `/files/C:/Users/`).
 *   [ ] **Missing Error Handling**: There is no error handling for the `invoke` calls to the backend. If an error occurs when reading a directory (e.g., permission denied), the application does not display a user-friendly error message.
 *   [ ] **State Inconsistency**: The `currentDirectory` in the Pinia store is not updated when the `getDirectory` function is called. This can lead to a mismatch between the displayed directory content and the actual current directory path in the state.
