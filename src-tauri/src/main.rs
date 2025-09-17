@@ -1,12 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::fs::{DirEntry, FileType, read_dir};
+use std::fs::{read_dir, DirEntry};
 use std::path::PathBuf;
-use std::time::SystemTime;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use sysinfo::{Disks, System, Disk};
+use sysinfo::{Disk, Disks, System};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -28,7 +27,7 @@ struct Volume {
 
 impl Volume {
     fn new(disk: &Disk) -> Self {
-        let name =disk.name().to_os_string().into_string().unwrap();
+        let name = disk.name().to_os_string().into_string().unwrap();
         let mount_point = disk.mount_point().to_path_buf();
         let available_space = disk.available_space();
         let total_space = disk.total_space();
