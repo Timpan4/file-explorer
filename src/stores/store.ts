@@ -9,6 +9,7 @@ export type DirectoryItem = {
     is_dir: boolean;
     last_modified: string;
     size: number;
+    file_type: string;
 }
 export const useDirectoryStore = defineStore('directory', () => {
   const currentDirectory = ref(localStorage.getItem("currentDirectory") || "");
@@ -23,9 +24,14 @@ export const useDirectoryStore = defineStore('directory', () => {
     });
 
   async function getDirectory(path: string) {
-      console.log("getDirectory", path);
-      currentDirectoryItems.value = await invoke<DirectoryItem[]>("get_directory", {path: path || currentDirectory.value});
-      currentDirectory.value = path;
+      try {
+          const result = await invoke<DirectoryItem[]>("get_directory", {path: path || currentDirectory.value});
+          currentDirectoryItems.value = result;
+          currentDirectory.value = path;
+      } catch (error) {
+          console.error("store.ts: Error invoking get_directory:", error);
+          currentDirectoryItems.value = []; // Clear items on error
+      }
   }
   return {
       currentDirectory,

@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use sysinfo::{Disk, Disks, System};
+use mime;
+use std::str::FromStr;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -63,6 +65,7 @@ struct DirItem {
     is_dir: bool,
     last_modified: String,
     size: u64,
+    file_type: String,
 }
 
 impl DirItem {
@@ -75,6 +78,51 @@ impl DirItem {
 
         let last_modified = last_modified_raw.format("%Y-%m-%d %H:%M:%S").to_string();
 
+        let file_type = if is_dir {
+            "Folder".to_string()
+        } else {
+            let mime_type = mime_guess::from_path(&entry.path());
+            if let Some(m) = mime_type.first() {
+                if m.type_() == mime::Mime::from_str("application/octet-stream").unwrap().type_() && m.subtype() == mime::Mime::from_str("application/octet-stream").unwrap().subtype() {
+                    // Fallback to extension if it's octet-stream
+                    if let Some(ext) = entry.path().extension() {
+                        match ext.to_str().unwrap_or("File").to_uppercase().as_str() {
+                            "LNK" => "Shortcut".to_string(), // Windows shortcut
+                            "EXE" | "MSI" | "APP" => "Application".to_string(),
+                            _ => ext.to_str().unwrap_or("File").to_uppercase(),
+                        }
+                    } else {
+                        "File".to_string()
+                    }
+                } else {
+                    match m.type_().as_str() {
+                        "image" => "Image".to_string(),
+                        "video" => "Video".to_string(),
+                        "audio" => "Audio".to_string(),
+                        "text" => "Text Document".to_string(),
+                        "application" => match m.subtype().as_str() {
+                            "pdf" => "PDF Document".to_string(),
+                            "zip" | "x-tar" | "x-7z-compressed" | "x-rar-compressed" => "Archive".to_string(),
+                            "vnd.microsoft.portable-executable" => "Application".to_string(), // .exe
+                            _ => m.subtype().as_str().to_uppercase(),
+                        },
+                        _ => m.subtype().as_str().to_uppercase(),
+                    }
+                }
+            } else {
+                // Fallback to extension if no mime type is found
+                if let Some(ext) = entry.path().extension() {
+                    match ext.to_str().unwrap_or("File").to_uppercase().as_str() {
+                        "LNK" => "Shortcut".to_string(), // Windows shortcut
+                        "EXE" | "MSI" | "APP" => "Application".to_string(),
+                        _ => ext.to_str().unwrap_or("File").to_uppercase(),
+                    }
+                } else {
+                    "File".to_string()
+                }
+            }
+        };
+
         println!("{:?}", size);
 
         Self {
@@ -83,6 +131,7 @@ impl DirItem {
             is_dir,
             last_modified,
             size,
+            file_type,
         }
     }
 }
