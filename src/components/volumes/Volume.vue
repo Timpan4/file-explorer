@@ -18,7 +18,7 @@ function bytesToGigabytes(bytes: number, precision: number = 2) {
 
 async function getDirectory(path: string) {
   await directoryStore.getDirectory(path);
-    await router.push("/files");
+    await router.push(`/files/${encodeURIComponent(path)}`);
 }
 
 </script>

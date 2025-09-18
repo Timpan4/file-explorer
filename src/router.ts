@@ -9,7 +9,7 @@ const routes = [
     component: VolumeList,
   },
   {
-    path: "/files",
+    path: "/files/:pathMatch(.*)*",
     component: DirectoryList,
   },
 ];
