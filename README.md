@@ -1,71 +1,49 @@
-# Tauri File Explorer
+# File Explorer
 
-## Overview
-This project aims to create a file explorer application using Tauri. The primary goal is to learn Rust and explore desktop development.
+Windows-first file explorer rebooted from scratch as a Rust application with a thin Tauri renderer.
 
-**Note:** This project is still in development and is not yet ready for use.
+## Product Direction
 
-## Table of Contents
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Development](#development)
+- Beat `Files` on perceived speed, not just binary size.
+- Keep all file-system logic in Rust.
+- Use Tauri and SvelteKit only as the UI renderer.
+- Optimize for Windows first while keeping Rust interfaces portable enough for future macOS/Linux backends.
 
-## Features
-- Browse and manage files and directories. To come.
-- Cross-platform support (Windows, macOS, Linux), To come. Windows support is the primary target first.
-- File operations (create, delete, rename, copy, move). To come.
-- File previews (image, video, audio, text, PDF, etc.). To come.
-- File search. To come.
-- File sorting. To come.
-- File properties. To come.
-- Tabs. To come.
-- Home view. To come.
-- Lightweight and fast. To come.
+## Core Principles
 
-## Installation
+- Navigation must be incremental, cancelable, and benchmarked.
+- The UI never owns sorting, searching, metadata hydration, or file operations.
+- Expensive enrichments such as thumbnails, Git state, hashes, preview generation, and cloud metadata stay off the hot path.
+- Large lists must be virtualized from day one.
 
-### Prerequisites
-- [Rust](https://www.rust-lang.org/)
-- [Node.js](https://nodejs.org/)
-- [Tauri CLI](https://tauri.app/v1/guides/getting-started/prerequisites)
-- [Bun](https://bun.sh/)
+## Current State
 
-### Clone the repository
-```sh
-git clone https://github.com/yourusername/tauri-file-explorer.git
-cd tauri-file-explorer
-```
+This repo has been reset and reinitialized on the latest stable Tauri scaffold with:
 
-### Setup
-Install dependencies
+- `Tauri 2`
+- `SvelteKit`
+- `TypeScript`
+- `bun`
+- `Rust`
+
+## Planning Docs
+
+- `ROADMAP.md` - product and architecture roadmap
+- `TODOS.md` - implementation backlog for the next build phases
+
+## Why Svelte Here
+
+Svelte is a good fit for this architecture because the frontend is intentionally thin. It keeps renderer code smaller and simpler than a typical Vue setup while still being perfectly capable of hosting virtualized views, panes, tabs, and command surfaces.
+
+Vue would also work, but for a renderer-only desktop shell I would pick Svelte first unless your team already has strong Vue momentum.
+
+## Development
+
 ```sh
 bun install
+bun run tauri dev
 ```
 
-Run the development server
-```sh
-bun tauri dev
-```
-### Usage
-After running the development server, the application will open. You can explore the current directory, navigate through folders, and perform file operations.
+## Immediate Goal
 
-Development
-Project Structure
-```
-.
-├── src/              # Rust source files
-├── src-tauri/        # Tauri configuration and Rust backend
-├── public/           # Public assets
-├── package.json      # Project configuration and dependencies
-└── README.md         # Project documentation
-```
-
-### Building the project
-```sh
-bun tauri build
-```
-The build artifacts will be located in the src-tauri/target directory.
-
-### Contributing
-Contributions are welcome! Please fork the repository and submit a pull request.
+Build a single-pane details view backed by a Rust directory engine that streams incremental results into a virtualized Svelte list.
