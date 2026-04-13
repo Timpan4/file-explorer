@@ -23,25 +23,26 @@ Build a Windows-first file explorer that feels faster than Files by keeping the 
 ## Phase 0 - Foundations
 
 - Define Rust crate boundaries.
-- Define IPC model around request ids, job ids, and streamed deltas.
+- Define IPC model around request ids, job ids, and streamed deltas. Done for the first explorer slice.
 - Build benchmark harness for startup, navigation, search, sort, and file operations.
-- Lock down renderer-only frontend rules.
+- Lock down renderer-only frontend rules. Done for the current Tauri/Svelte shell.
 
 ## Phase 1 - Fast Navigation Core
 
-- Create Rust directory engine with Windows-first enumeration.
+- Create Rust directory engine with Windows-first enumeration. Done for the current single-pane explorer slice.
 - Return cheap item fields first, enrich later.
-- Add snapshot cache and cancellation-aware job scheduler.
-- Build a virtualized details view in Svelte.
-- Support basic selection, focus, keyboard navigation, and breadcrumbs.
+- Add snapshot cache and cancellation-aware job scheduler. Done.
+- Build a virtualized details view in Svelte. Done.
+- Support basic selection, focus, keyboard navigation, and breadcrumbs. Done.
 
 ## Phase 2 - Productivity Baseline
 
-- Add tabs.
+- Add tabs. Done.
 - Add dual pane.
 - Add omnibar and command palette shell.
 - Add copy, move, rename, delete, recycle bin, and conflict UX.
-- Add fast in-folder filtering and sort specs powered by Rust.
+- Add fast in-folder filtering and sort specs powered by Rust. Done.
+- Add advanced/developer settings for artificial navigation delay and UI testing toggles. Done.
 
 ## Phase 3 - Rich File Workflows
 

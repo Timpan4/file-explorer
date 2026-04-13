@@ -44,6 +44,15 @@ bun install
 bun run tauri dev
 ```
 
+To artificially slow navigation for UI testing, set `VITE_EXPLORER_NAV_DELAY_MS` before starting dev.
+
+PowerShell example:
+
+```powershell
+$env:VITE_EXPLORER_NAV_DELAY_MS = "500"
+bun run tauri dev
+```
+
 ## Immediate Goal
 
 Build a single-pane details view backed by a Rust directory engine that streams incremental results into a virtualized Svelte list.

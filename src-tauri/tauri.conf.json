@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "File Explorer",
+        "decorations": false,
         "width": 1440,
         "height": 920,
         "minWidth": 1100,

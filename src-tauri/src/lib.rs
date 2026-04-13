@@ -1,31 +1,27 @@
-use serde::Serialize;
+mod commands;
+mod explorer;
+mod ipc;
+mod platform;
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct BootstrapSummary {
-    product_name: &'static str,
-    target_platform: &'static str,
-    renderer: &'static str,
-    backend: &'static str,
-    strategy: &'static str,
-}
-
-#[tauri::command]
-fn get_bootstrap_summary() -> BootstrapSummary {
-    BootstrapSummary {
-        product_name: "File Explorer",
-        target_platform: "Windows-first",
-        renderer: "SvelteKit via Tauri",
-        backend: "Rust",
-        strategy: "Renderer-only frontend, Rust-owned logic, streaming directory data, virtualization everywhere",
-    }
-}
+use explorer::service::ExplorerService;
+use std::sync::Arc;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let explorer = Arc::new(ExplorerService::new());
+
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_bootstrap_summary])
+        .manage(explorer)
+        .invoke_handler(tauri::generate_handler![
+            commands::explorer::start_directory_navigation,
+            commands::explorer::cancel_directory_navigation,
+            commands::explorer::list_sidebar_roots,
+            commands::explorer::hydrate_directory_icons,
+            commands::explorer::rename_directory_item,
+            commands::explorer::open_directory_item,
+            commands::explorer::create_directory,
+            commands::explorer::delete_to_recycle_bin
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
