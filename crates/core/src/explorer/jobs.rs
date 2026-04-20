@@ -1,4 +1,4 @@
-use crate::ipc::directory::CancelReason;
+use crate::directory::CancelReason;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -30,6 +30,12 @@ impl JobHandle {
 
     pub fn cancel_reason(&self) -> Option<CancelReason> {
         self.reason.lock().ok().and_then(|guard| guard.clone())
+    }
+}
+
+impl Default for JobHandle {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -88,5 +94,11 @@ impl JobRegistry {
         if let Ok(mut guard) = self.active_by_tab.lock() {
             guard.retain(|_, active_job_id| active_job_id != job_id);
         }
+    }
+}
+
+impl Default for JobRegistry {
+    fn default() -> Self {
+        Self::new()
     }
 }

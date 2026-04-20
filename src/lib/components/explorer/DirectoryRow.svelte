@@ -132,9 +132,11 @@
     class:focused
     class="row"
     style={`grid-template-columns:${gridTemplate};`}
+    tabindex="-1"
     onclick={(event) => onSelect(item, event)}
     oncontextmenu={(event) => onContextMenu(item, event)}
     ondblclick={() => onOpen(item)}
+    onpointerdown={(event) => event.preventDefault()}
     type="button"
   >
     <span class="name">
@@ -154,21 +156,40 @@
 <style>
   .row {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
-    height: 38px;
+    height: 32px;
     margin: 2px 0;
     box-sizing: border-box;
-    padding: 0 16px;
+    padding: 0 12px;
     border: 1px solid transparent;
     background: transparent;
     color: var(--text-primary);
-    font-size: 0.86rem;
+    font-size: 0.84rem;
     text-align: left;
-    border-radius: 8px;
+    border-radius: 4px;
     user-select: none;
     -webkit-user-select: none;
     width: fit-content;
+  }
+
+  .row > span {
+    position: relative;
+  }
+
+  .row > span + span {
+    padding-left: 10px;
+  }
+
+  .row > span + span::before {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: 3px;
+    bottom: 3px;
+    width: 1px;
+    background: color-mix(in srgb, var(--row-border) 92%, transparent);
+    pointer-events: none;
   }
 
   .row.renaming {
@@ -176,13 +197,13 @@
   }
 
   .row:hover {
-    background: color-mix(in srgb, var(--accent-soft-strong) 78%, transparent);
-    border-color: color-mix(in srgb, var(--row-border) 82%, transparent);
+    background: color-mix(in srgb, var(--accent-soft-strong) 52%, transparent);
+    border-color: color-mix(in srgb, var(--row-border) 56%, transparent);
   }
 
   .row.selected {
-    background: color-mix(in srgb, var(--selection-bg) 84%, transparent);
-    border-color: color-mix(in srgb, var(--selection-border) 55%, transparent);
+    background: color-mix(in srgb, var(--selection-bg) 96%, transparent);
+    border-color: color-mix(in srgb, var(--selection-border) 68%, transparent);
     color: var(--selection-text);
   }
 
@@ -211,8 +232,8 @@
     min-width: 0;
     width: min(100%, 420px);
     border: 1px solid color-mix(in srgb, var(--focus-ring) 38%, transparent);
-    border-radius: 6px;
-    background: color-mix(in srgb, var(--surface-raised) 96%, transparent);
+    border-radius: 4px;
+    background: var(--surface-input);
     color: inherit;
     font: inherit;
     font-weight: 500;
@@ -240,6 +261,7 @@
     white-space: nowrap;
     user-select: none;
     -webkit-user-select: none;
+    font-size: 0.82rem;
   }
 
   .row.selected .meta {

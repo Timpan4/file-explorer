@@ -100,21 +100,20 @@
   .status-bar {
     display: flex;
     align-items: center;
-    min-height: 34px;
-    padding: 0 14px;
+    min-height: 30px;
+    padding: 0 12px;
     border-top: 1px solid color-mix(in srgb, var(--panel-border) 88%, transparent);
-    background: color-mix(in srgb, var(--surface-subtle) 86%, transparent);
+    background: var(--surface-subtle);
     color: var(--text-muted);
     font-size: 0.78rem;
     user-select: none;
     -webkit-user-select: none;
-    border-radius: 0 0 14px 14px;
   }
 
   .left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 

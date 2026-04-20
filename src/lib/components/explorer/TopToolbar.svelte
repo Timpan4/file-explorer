@@ -156,10 +156,16 @@
   .toolbar {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     flex-shrink: 0;
     user-select: none;
     -webkit-user-select: none;
+  }
+
+  :global(.toolbar-button) {
+    --button-height: 26px;
+    --button-radius: 6px;
+    --button-icon-size: 15px;
   }
 
   :global(.toolbar-button.refresh-button.spinning svg) {

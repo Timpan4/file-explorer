@@ -67,10 +67,10 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 10px 6px 10px;
+    padding: 8px 4px;
     border-right: 1px solid var(--sidebar-divider);
-    border-radius: 14px;
-    background: linear-gradient(180deg, var(--sidebar-bg-start), var(--sidebar-bg-end));
+    border-radius: 4px;
+    background: var(--sidebar-bg-start);
     user-select: none;
     -webkit-user-select: none;
     box-sizing: border-box;
@@ -83,19 +83,19 @@
 
   .section-label {
     margin: 0 0 6px;
-    padding: 0 10px;
-    font-size: 0.74rem;
+    padding: 0 8px;
+    font-size: 0.72rem;
     letter-spacing: 0.01em;
     color: var(--text-muted);
     font-weight: 600;
   }
 
   section + section {
-    margin-top: 12px;
+    margin-top: 10px;
   }
 
   .footer-nav {
-    padding-top: 12px;
+    padding-top: 10px;
     border-top: 1px solid color-mix(in srgb, var(--sidebar-divider) 82%, transparent);
   }
 
@@ -108,13 +108,13 @@
   button {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    min-height: 32px;
-    margin-bottom: 1px;
-    padding: 7px 10px;
+    min-height: 30px;
+    margin-bottom: 0;
+    padding: 6px 8px;
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 4px;
     background: transparent;
     color: var(--text-primary);
     text-align: left;
@@ -127,10 +127,10 @@
   :global(.settings-link) {
     display: flex;
     align-items: center;
-    gap: 10px;
-    min-height: 34px;
+    gap: 8px;
+    min-height: 30px;
     width: 100%;
-    padding: 7px 10px;
+    padding: 6px 8px;
     color: var(--text-primary);
     text-align: left;
   }
@@ -159,7 +159,7 @@
     width: auto;
     min-height: auto;
     margin: 0;
-    padding: 4px 8px;
+    padding: 3px 6px;
     font-size: 0.78rem;
     color: var(--text-muted);
   }

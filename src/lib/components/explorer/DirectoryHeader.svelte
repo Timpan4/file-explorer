@@ -72,7 +72,7 @@
 <style>
   .header-bar {
     border-bottom: 1px solid color-mix(in srgb, var(--panel-border) 80%, transparent);
-    background: color-mix(in srgb, var(--surface-subtle) 98%, var(--surface-raised));
+    background: var(--surface-subtle);
     position: sticky;
     top: 0;
     z-index: 2;
@@ -80,9 +80,9 @@
 
   .header-columns {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     width: fit-content;
-    padding: 8px 16px 8px;
+    padding: 6px 12px;
     color: var(--text-muted);
     font-size: 0.75rem;
     letter-spacing: 0.01em;
@@ -98,17 +98,29 @@
     position: relative;
   }
 
+  .column + .column::before {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: 4px;
+    bottom: 4px;
+    width: 1px;
+    background: color-mix(in srgb, var(--panel-border) 96%, transparent);
+    pointer-events: none;
+  }
+
   .sort-button {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) 12px;
+    column-gap: 6px;
     align-items: center;
     width: 100%;
     min-width: 0;
-    min-height: 22px;
-    padding: 0 18px 0 0;
+    min-height: 24px;
+    padding: 0 6px;
     border: none;
-    border-radius: 0;
+    border-radius: 4px;
     background: transparent;
     color: inherit;
     font: inherit;
@@ -117,12 +129,13 @@
   }
 
   .sort-button:hover {
-    background: color-mix(in srgb, var(--button-hover-bg) 18%, transparent);
+    background: color-mix(in srgb, var(--button-hover-bg) 36%, transparent);
     color: var(--text-primary);
   }
 
   .sort-button.active {
-    background: color-mix(in srgb, var(--accent-soft) 18%, transparent);
+    background: color-mix(in srgb, var(--accent-soft) 36%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--selection-border) 52%, transparent);
     color: var(--text-primary);
   }
 
@@ -175,8 +188,8 @@
   .align-right,
   .sort-button.align-right {
     text-align: right;
-    padding-right: 18px;
-    padding-left: 0;
+    padding-right: 6px;
+    padding-left: 6px;
   }
 
   .sort-button.align-right .label-wrap {
@@ -199,24 +212,24 @@
     border: none;
     border-radius: 0;
     background: transparent;
-    opacity: 0.6;
+    opacity: 0.5;
     transition: opacity 120ms ease;
   }
 
   .resize-handle::before {
     content: "";
     position: absolute;
-    top: 4px;
-    bottom: 4px;
+    top: 5px;
+    bottom: 5px;
     left: 50%;
-    width: 2px;
+    width: 1px;
     transform: translateX(-50%);
-    background: color-mix(in srgb, var(--panel-border) 98%, transparent);
+    background: color-mix(in srgb, var(--panel-border) 100%, transparent);
     border-radius: 999px;
   }
 
   .header-bar:hover .resize-handle {
-    opacity: 0.7;
+    opacity: 0.72;
   }
 
   .column:hover .resize-handle,

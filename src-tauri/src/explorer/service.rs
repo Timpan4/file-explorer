@@ -1,12 +1,13 @@
-use crate::explorer::jobs::{JobHandle, JobRegistry};
-use crate::ipc::directory::{
-    CancelReason, CreateFolderRequest, CreateFolderResponse, DeleteToRecycleBinFailure,
-    DeleteToRecycleBinRequest, DeleteToRecycleBinResponse, DeleteToRecycleBinSuccess,
-    DirectoryItemKind, ExplorerError, ExplorerStreamEvent, FailedEvent, NativeIconBatchRequest,
-    NativeIconBatchResponse, NavigationRequest, OpenPathRequest, RenameRequest, RenameResponse,
-    SidebarRoot, SidebarRootKind, SnapshotChunk, SnapshotCompleted, SnapshotStarted,
+use file_explorer_core::directory::{
+    CancelReason, CancelledEvent, CreateFolderRequest, CreateFolderResponse,
+    DeleteToRecycleBinFailure, DeleteToRecycleBinRequest, DeleteToRecycleBinResponse,
+    DeleteToRecycleBinSuccess, DirectoryItemKind, DirectoryItemStub, ExplorerError,
+    ExplorerStreamEvent, FailedEvent, NativeIconBatchRequest, NativeIconBatchResponse,
+    NavigationRequest, OpenPathRequest, RenameRequest, RenameResponse, SidebarRoot,
+    SidebarRootKind, SnapshotChunk, SnapshotCompleted, SnapshotStarted,
 };
-use crate::platform::windows::fs;
+use file_explorer_core::jobs::{JobHandle, JobRegistry};
+use file_explorer_platform_windows::windows::{fs, icons};
 use std::collections::{BTreeSet, HashMap};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -14,11 +15,11 @@ use tauri::ipc::Channel;
 
 #[derive(Clone)]
 struct CachedDirectorySnapshot {
-    items: Arc<Vec<crate::ipc::directory::DirectoryItemStub>>,
+    items: Arc<Vec<DirectoryItemStub>>,
 }
 
 struct ResolvedDirectorySnapshot {
-    items: Arc<Vec<crate::ipc::directory::DirectoryItemStub>>,
+    items: Arc<Vec<DirectoryItemStub>>,
     cache_hit: bool,
     resolve_snapshot_ms: u128,
     enumerate_fs_ms: Option<u128>,
@@ -58,11 +59,7 @@ impl DirectorySnapshotCache {
             .and_then(|guard| guard.get(key).cloned())
     }
 
-    fn insert(
-        &self,
-        key: DirectoryCacheKey,
-        items: Arc<Vec<crate::ipc::directory::DirectoryItemStub>>,
-    ) {
+    fn insert(&self, key: DirectoryCacheKey, items: Arc<Vec<DirectoryItemStub>>) {
         if let Ok(mut guard) = self.inner.lock() {
             guard.insert(key, CachedDirectorySnapshot { items });
         }
@@ -156,7 +153,7 @@ impl ExplorerService {
             label: "Home".to_string(),
             path: home_dir(),
             kind: SidebarRootKind::Favorite,
-            icon_data_url: crate::platform::windows::icons::icon_for_sidebar_path(&home_dir()),
+            icon_data_url: icons::icon_for_sidebar_path(&home_dir()),
         }];
 
         roots.extend(fs::list_drive_roots()?);
@@ -398,12 +395,10 @@ impl ExplorerService {
         };
 
         if job.is_cancelled() {
-            let _ = on_event.send(ExplorerStreamEvent::Cancelled(
-                crate::ipc::directory::CancelledEvent {
-                    job_id: request.job_id.clone(),
-                    reason: job.cancel_reason().unwrap_or(CancelReason::Explicit),
-                },
-            ));
+            let _ = on_event.send(ExplorerStreamEvent::Cancelled(CancelledEvent {
+                job_id: request.job_id.clone(),
+                reason: job.cancel_reason().unwrap_or(CancelReason::Explicit),
+            }));
             self.jobs.remove(&request.job_id);
             return;
         }
@@ -430,12 +425,10 @@ impl ExplorerService {
         let mut first_chunk_send_ms = None;
         for chunk in entries[start_index..].chunks(chunk_size) {
             if job.is_cancelled() {
-                let _ = on_event.send(ExplorerStreamEvent::Cancelled(
-                    crate::ipc::directory::CancelledEvent {
-                        job_id: request.job_id.clone(),
-                        reason: job.cancel_reason().unwrap_or(CancelReason::Explicit),
-                    },
-                ));
+                let _ = on_event.send(ExplorerStreamEvent::Cancelled(CancelledEvent {
+                    job_id: request.job_id.clone(),
+                    reason: job.cancel_reason().unwrap_or(CancelReason::Explicit),
+                }));
                 self.jobs.remove(&request.job_id);
                 return;
             }
@@ -469,7 +462,7 @@ impl ExplorerService {
             cache_hit: resolved_snapshot.cache_hit,
             resolve_snapshot_ms: resolved_snapshot.resolve_snapshot_ms,
             enumerate_fs_ms: resolved_snapshot.enumerate_fs_ms,
-            enumerate_entries_ms: resolved_snapshot.enumerate_fs_ms,
+            enumerate_entries_ms: None,
             icon_lookup_total_ms: None,
             icon_lookup_count: None,
             icon_encode_total_ms: None,
@@ -550,18 +543,18 @@ fn reconcile_delete_race_invalidation(
 mod tests {
     use super::*;
 
-    fn cached_items(name: &str) -> Arc<Vec<crate::ipc::directory::DirectoryItemStub>> {
-        Arc::new(vec![crate::ipc::directory::DirectoryItemStub {
+    fn cached_items(name: &str) -> Arc<Vec<DirectoryItemStub>> {
+        Arc::new(vec![DirectoryItemStub {
             id: name.to_string(),
             name: name.to_string(),
             path: format!(r"C:\\Temp\\{name}"),
-            kind: crate::ipc::directory::DirectoryItemKind::File,
+            kind: DirectoryItemKind::File,
             size: None,
             modified_at: None,
             hidden: false,
             readonly: false,
             icon_data_url: None,
-            native_icon_state: crate::ipc::directory::NativeIconState::Pending,
+            native_icon_state: file_explorer_core::directory::NativeIconState::Pending,
         }])
     }
 
