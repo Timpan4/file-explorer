@@ -1,7 +1,5 @@
 mod commands;
 mod explorer;
-mod ipc;
-mod platform;
 
 use explorer::service::ExplorerService;
 use std::sync::Arc;

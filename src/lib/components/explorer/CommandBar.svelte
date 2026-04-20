@@ -45,10 +45,9 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 6px 12px;
+    padding: 4px 10px;
     border-bottom: none;
-    background: color-mix(in srgb, var(--surface-subtle) 98%, var(--surface-raised));
-    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--panel-border) 70%, transparent);
+    background: var(--surface-subtle);
     position: relative;
     z-index: 2;
   }
@@ -56,9 +55,9 @@
   :global(.command) {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    min-height: 30px;
-    padding: 0 9px;
+    gap: 5px;
+    min-height: 26px;
+    padding: 0 8px;
     color: color-mix(in srgb, var(--text-primary) 92%, transparent);
     font-size: 0.79rem;
   }
@@ -78,8 +77,8 @@
 
   .separator {
     width: 1px;
-    height: 16px;
-    margin: 0 6px;
+    height: 14px;
+    margin: 0 4px;
     background: color-mix(in srgb, var(--panel-border) 62%, transparent);
   }
 </style>

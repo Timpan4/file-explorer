@@ -1,5 +1,5 @@
 use crate::explorer::service::ExplorerService;
-use crate::ipc::directory::{
+use file_explorer_core::directory::{
     CancelRequest, CreateFolderRequest, CreateFolderResponse, DeleteToRecycleBinRequest,
     DeleteToRecycleBinResponse, ExplorerError, NativeIconBatchRequest, NativeIconBatchResponse,
     NavigationRequest, OpenPathRequest, RenameRequest, RenameResponse, SidebarRoot,
@@ -11,7 +11,7 @@ use tauri::{ipc::Channel, State};
 pub fn start_directory_navigation(
     explorer: State<'_, Arc<ExplorerService>>,
     request: NavigationRequest,
-    on_event: Channel<crate::ipc::directory::ExplorerStreamEvent>,
+    on_event: Channel<file_explorer_core::directory::ExplorerStreamEvent>,
 ) -> Result<(), ExplorerError> {
     explorer.start_navigation(request, on_event)
 }

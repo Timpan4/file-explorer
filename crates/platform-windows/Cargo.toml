@@ -1,0 +1,11 @@
+[package]
+name = "file-explorer-platform-windows"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chrono = { workspace = true }
+base64 = { workspace = true }
+image = { workspace = true }
+windows = { workspace = true }
+file-explorer-core = { path = "../core" }

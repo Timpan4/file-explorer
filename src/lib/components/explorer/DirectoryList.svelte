@@ -12,7 +12,7 @@
     error: string | null;
   } | null;
 
-  const ROW_HEIGHT = 42;
+  const ROW_HEIGHT = 36;
   const OVERSCAN = 10;
   const ENABLE_ROW_VISIBILITY_TRACE = explorerTimingTrace.isExplorerTimingTraceEnabled();
 
@@ -31,6 +31,8 @@
   } = $props();
 
   let listElement = $state<HTMLDivElement | null>(null);
+  let focusRevealSource = $state<"keyboard" | "pointer" | null>(null);
+  let lastHandledFocusItemId = $state<string | null>(null);
 
   let { selectedIds, focusedItemId } = $derived($explorerSession);
   const rename = $derived(($explorerSession as { rename?: RenameState }).rename ?? null);
@@ -43,7 +45,20 @@
   const bottomSpacerHeight = $derived(Math.max(0, totalHeight - endIndex * ROW_HEIGHT));
 
   $effect(() => {
-    if (!viewportElement || !focusedItemId) {
+    if (!focusedItemId) {
+      lastHandledFocusItemId = null;
+      return;
+    }
+
+    if (focusedItemId === lastHandledFocusItemId) {
+      return;
+    }
+
+    const revealSource = focusRevealSource;
+    lastHandledFocusItemId = focusedItemId;
+    focusRevealSource = null;
+
+    if (!viewportElement || revealSource !== "keyboard") {
       return;
     }
 
@@ -111,15 +126,19 @@
   async function handleKeydown(event: KeyboardEvent) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
+      focusRevealSource = "keyboard";
       explorerSession.moveFocus(1);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
+      focusRevealSource = "keyboard";
       explorerSession.moveFocus(-1);
     } else if (event.key === "Home") {
       event.preventDefault();
+      focusRevealSource = "keyboard";
       explorerSession.focusFirst();
     } else if (event.key === "End") {
       event.preventDefault();
+      focusRevealSource = "keyboard";
       explorerSession.focusLast();
     } else if (event.key === "Enter") {
       event.preventDefault();
@@ -140,8 +159,10 @@
   }
 
   function handleSelect(item: DirectoryItemStub, event: MouseEvent) {
+    focusRevealSource = "pointer";
+
     if (!event.shiftKey && !event.ctrlKey && !event.metaKey && selectedIds.length === 1 && selectedIds[0] === item.id) {
-      listElement?.focus();
+      listElement?.focus({ preventScroll: true });
       return;
     }
 
@@ -151,7 +172,7 @@
       metaKey: event.metaKey
     });
 
-    listElement?.focus();
+    listElement?.focus({ preventScroll: true });
   }
 
   function handleBackgroundClick(event: MouseEvent) {
@@ -162,16 +183,17 @@
 
     explorerSession.clearSelection();
     explorerUi.closeContextMenu();
-    listElement?.focus();
+    listElement?.focus({ preventScroll: true });
   }
 
   function handleRowContextMenu(item: DirectoryItemStub, event: MouseEvent) {
     event.preventDefault();
     if (!selectedIds.includes(item.id)) {
+      focusRevealSource = "pointer";
       explorerSession.selectSingle(item.id);
     }
     explorerUi.openContextMenu("row-menu", event.clientX, event.clientY);
-    listElement?.focus();
+    listElement?.focus({ preventScroll: true });
   }
 
   function handleBackgroundContextMenu(event: MouseEvent) {
@@ -183,7 +205,7 @@
     event.preventDefault();
     explorerSession.clearSelection();
     explorerUi.openContextMenu("background-menu", event.clientX, event.clientY);
-    listElement?.focus();
+    listElement?.focus({ preventScroll: true });
   }
 </script>
 
@@ -225,6 +247,7 @@
     background: transparent;
     padding: 0 8px 8px;
     box-sizing: border-box;
+    overflow-x: hidden;
     user-select: none;
     -webkit-user-select: none;
   }
@@ -235,10 +258,6 @@
 
   .table-surface {
     display: grid;
-  }
-
-  .list:focus-visible {
-    box-shadow: inset 0 0 0 2px var(--focus-ring);
   }
 
   .list:not(:focus-within) :global(.row.selected) {

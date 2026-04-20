@@ -9,5 +9,6 @@ dist
 !.env.example
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+/target
 src-tauri/target
 .idea

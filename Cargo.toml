@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/platform-windows",
+    "src-tauri",
+]
+
+[workspace.dependencies]
+tauri = { version = "2", features = [] }
+tauri-build = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+chrono = { version = "0.4", features = ["clock"] }
+base64 = "0.22"
+image = { version = "0.25", default-features = false, features = ["png"] }
+windows = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_Storage_FileSystem",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging"
+] }

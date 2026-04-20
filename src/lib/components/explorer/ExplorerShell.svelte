@@ -53,33 +53,28 @@ import StatusBar from "$lib/components/explorer/StatusBar.svelte";
 <style>
   :global(:root) {
     color-scheme: light dark;
-    --app-bg-solid: #eff2f6;
-    --app-bg-overlay: rgba(255, 255, 255, 0.72);
-    --app-bg-gradient-start: #eef3f8;
-    --app-bg-gradient-end: #f6f7fa;
+    --app-bg-solid: #edf1f5;
     --text-primary: #1f2937;
     --text-strong: #111827;
-    --text-muted: #6b7280;
+    --text-muted: #5f6978;
     --panel-border: rgba(15, 23, 42, 0.08);
-    --panel-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-    --header-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-    --header-bg: rgba(248, 250, 252, 0.92);
-    --content-bg: rgba(255, 255, 255, 0.92);
-    --sidebar-bg-start: rgba(246, 248, 250, 0.96);
-    --sidebar-bg-end: rgba(241, 244, 248, 0.98);
+    --header-bg: #f7f9fb;
+    --content-bg: #ffffff;
+    --sidebar-bg-start: #f4f6f8;
+    --sidebar-bg-end: #f4f6f8;
     --sidebar-divider: rgba(15, 23, 42, 0.08);
-    --button-bg: rgba(255, 255, 255, 0.88);
+    --button-bg: #ffffff;
     --button-border: rgba(15, 23, 42, 0.1);
-    --button-hover-border: rgba(59, 130, 246, 0.18);
-    --button-hover-bg: rgba(239, 246, 255, 0.94);
+    --button-hover-border: rgba(59, 130, 246, 0.14);
+    --button-hover-bg: #f2f6fb;
     --warn-hover-border: rgba(239, 68, 68, 0.18);
-    --warn-hover-bg: rgba(254, 242, 242, 0.94);
-    --accent-soft: rgba(37, 99, 235, 0.14);
-    --accent-soft-strong: rgba(37, 99, 235, 0.08);
+    --warn-hover-bg: #fdf1f1;
+    --accent-soft: rgba(37, 99, 235, 0.12);
+    --accent-soft-strong: rgba(37, 99, 235, 0.06);
     --accent-text: #0f3d91;
     --pill-text: #2458b8;
-    --surface-raised: rgba(255, 255, 255, 0.96);
-    --surface-subtle: #f7f9fb;
+    --surface-raised: #ffffff;
+    --surface-subtle: #f5f7fa;
     --surface-input: #ffffff;
     --row-border: rgba(15, 23, 42, 0.06);
     --focus-ring: #3b82f6;
@@ -97,33 +92,28 @@ import StatusBar from "$lib/components/explorer/StatusBar.svelte";
   @media (prefers-color-scheme: dark) {
     :global(:root) {
       --app-bg-solid: #111418;
-      --app-bg-overlay: rgba(9, 12, 16, 0.74);
-      --app-bg-gradient-start: #171b21;
-      --app-bg-gradient-end: #11151a;
       --text-primary: #e7ebf0;
       --text-strong: #f4f7fb;
-      --text-muted: #a0a9b6;
+      --text-muted: #b0b9c6;
       --panel-border: rgba(255, 255, 255, 0.08);
-      --panel-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-      --header-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      --header-bg: rgba(25, 29, 35, 0.9);
-      --content-bg: rgba(22, 26, 32, 0.96);
-      --sidebar-bg-start: rgba(23, 27, 33, 0.98);
-      --sidebar-bg-end: rgba(17, 21, 27, 0.98);
+      --header-bg: #1d2229;
+      --content-bg: #191d23;
+      --sidebar-bg-start: #171c22;
+      --sidebar-bg-end: #171c22;
       --sidebar-divider: rgba(255, 255, 255, 0.07);
-      --button-bg: rgba(39, 45, 55, 0.96);
+      --button-bg: #242a33;
       --button-border: rgba(255, 255, 255, 0.08);
-      --button-hover-border: rgba(96, 165, 250, 0.2);
-      --button-hover-bg: rgba(31, 58, 94, 0.7);
+      --button-hover-border: rgba(96, 165, 250, 0.16);
+      --button-hover-bg: #2a313b;
       --warn-hover-border: rgba(248, 113, 113, 0.2);
-      --warn-hover-bg: rgba(79, 28, 28, 0.72);
-      --accent-soft: rgba(96, 165, 250, 0.2);
-      --accent-soft-strong: rgba(96, 165, 250, 0.1);
+      --warn-hover-bg: #4a2424;
+      --accent-soft: rgba(96, 165, 250, 0.16);
+      --accent-soft-strong: rgba(96, 165, 250, 0.08);
       --accent-text: #cfe1ff;
       --pill-text: #b9d4ff;
-      --surface-raised: rgba(30, 35, 43, 0.98);
-      --surface-subtle: #1b2027;
-      --surface-input: #141920;
+      --surface-raised: #20262e;
+      --surface-subtle: #1c2128;
+      --surface-input: #13171d;
       --row-border: rgba(255, 255, 255, 0.06);
       --focus-ring: #79aafc;
       --selection-bg: rgba(96, 165, 250, 0.18);
@@ -149,9 +139,7 @@ import StatusBar from "$lib/components/explorer/StatusBar.svelte";
     height: 100%;
     overflow: hidden;
     color: var(--text-primary);
-    background:
-      linear-gradient(180deg, var(--app-bg-overlay), var(--app-bg-overlay)),
-      linear-gradient(180deg, var(--app-bg-gradient-start) 0%, var(--app-bg-gradient-end) 100%);
+    background: var(--app-bg-solid);
     font-family: "Segoe UI Variable", "Segoe UI", sans-serif;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -164,12 +152,12 @@ import StatusBar from "$lib/components/explorer/StatusBar.svelte";
     grid-template-columns: 248px minmax(0, 1fr);
     height: 100%;
     overflow: hidden;
-    background: color-mix(in srgb, var(--app-bg-overlay) 28%, transparent);
+    background: var(--app-bg-solid);
   }
 
   .sidebar-column {
     min-height: 0;
-    padding: 6px 0 8px 8px;
+    padding: 4px 0 6px 6px;
     box-sizing: border-box;
     overflow: hidden;
   }
@@ -179,7 +167,7 @@ import StatusBar from "$lib/components/explorer/StatusBar.svelte";
     grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 0;
     min-height: 0;
-    padding: 6px 8px 8px 6px;
+    padding: 4px 6px 6px 4px;
     min-width: 0;
     box-sizing: border-box;
   }
@@ -189,12 +177,11 @@ import StatusBar from "$lib/components/explorer/StatusBar.svelte";
     z-index: 2;
     display: grid;
     gap: 0;
-    padding: 7px 8px 8px;
+    padding: 5px 6px 6px;
     border: 1px solid var(--panel-border);
     border-bottom: none;
-    border-radius: 10px 10px 0 0;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--header-bg) 96%, var(--surface-raised)), var(--header-bg));
-    box-shadow: 0 1px 0 color-mix(in srgb, var(--surface-raised) 60%, transparent) inset;
+    border-radius: 6px 6px 0 0;
+    background: var(--header-bg);
   }
 
   .content-scroll-region {
@@ -211,9 +198,8 @@ import StatusBar from "$lib/components/explorer/StatusBar.svelte";
     overflow: hidden;
     border: 1px solid var(--panel-border);
     border-top: none;
-    border-radius: 0 0 10px 10px;
+    border-radius: 0;
     background: var(--content-bg);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   }
 
   @media (max-width: 960px) {
@@ -223,11 +209,11 @@ import StatusBar from "$lib/components/explorer/StatusBar.svelte";
     }
 
     .sidebar-column {
-      padding: 8px 8px 0;
+      padding: 6px 6px 0;
     }
 
     .content-column {
-      padding: 0 8px 8px;
+      padding: 0 6px 6px;
     }
   }
 </style>

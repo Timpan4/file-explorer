@@ -1,16 +1,15 @@
-use crate::ipc::directory::{
+use crate::windows::icons;
+use chrono::{DateTime, Local};
+use file_explorer_core::directory::{
     DirectoryItemKind, DirectoryItemStub, ExplorerError, NativeIconBatchResponse,
     NativeIconRequestItem, NativeIconResult, NativeIconState, SidebarRoot, SidebarRootKind,
     SortDirection, SortField, SortSpec,
 };
-use crate::platform::windows::icons;
-use chrono::{DateTime, Local};
 use std::cmp::Ordering;
 use std::fs;
 use std::os::windows::ffi::OsStrExt;
 use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
-#[cfg(test)]
 use std::sync::{Mutex, OnceLock};
 use std::time::Instant;
 use windows::core::PCWSTR;
@@ -124,7 +123,6 @@ pub fn create_directory(parent_path: &str) -> Result<PathBuf, ExplorerError> {
 pub fn delete_to_recycle_bin(target_path: &str) -> Result<(), ExplorerError> {
     let parsed_target_path = parse_existing_path(target_path, "delete")?;
 
-    #[cfg(test)]
     if let Some(result) = run_delete_to_recycle_bin_hook(&parsed_target_path) {
         return result;
     }
@@ -159,25 +157,20 @@ pub fn delete_to_recycle_bin(target_path: &str) -> Result<(), ExplorerError> {
     Ok(())
 }
 
-#[cfg(test)]
 type DeleteToRecycleBinHook = dyn Fn(&Path) -> Result<(), ExplorerError> + Send + Sync + 'static;
 
-#[cfg(test)]
 static DELETE_TO_RECYCLE_BIN_HOOK: OnceLock<Mutex<Option<Box<DeleteToRecycleBinHook>>>> =
     OnceLock::new();
 
-#[cfg(test)]
-pub(crate) struct DeleteToRecycleBinHookGuard;
+pub struct DeleteToRecycleBinHookGuard;
 
-#[cfg(test)]
 impl Drop for DeleteToRecycleBinHookGuard {
     fn drop(&mut self) {
         clear_delete_to_recycle_bin_hook();
     }
 }
 
-#[cfg(test)]
-pub(crate) fn install_delete_to_recycle_bin_hook<F>(hook: F) -> DeleteToRecycleBinHookGuard
+pub fn install_delete_to_recycle_bin_hook<F>(hook: F) -> DeleteToRecycleBinHookGuard
 where
     F: Fn(&Path) -> Result<(), ExplorerError> + Send + Sync + 'static,
 {
@@ -188,7 +181,6 @@ where
     DeleteToRecycleBinHookGuard
 }
 
-#[cfg(test)]
 fn clear_delete_to_recycle_bin_hook() {
     let hook_slot = DELETE_TO_RECYCLE_BIN_HOOK.get_or_init(|| Mutex::new(None));
     *hook_slot
@@ -196,7 +188,6 @@ fn clear_delete_to_recycle_bin_hook() {
         .expect("delete hook mutex should not be poisoned") = None;
 }
 
-#[cfg(test)]
 fn run_delete_to_recycle_bin_hook(target_path: &Path) -> Option<Result<(), ExplorerError>> {
     let hook_slot = DELETE_TO_RECYCLE_BIN_HOOK.get_or_init(|| Mutex::new(None));
     hook_slot

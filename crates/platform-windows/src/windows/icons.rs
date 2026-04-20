@@ -1,5 +1,5 @@
-use crate::ipc::directory::{DirectoryItemKind, ExplorerError};
 use base64::Engine;
+use file_explorer_core::directory::{DirectoryItemKind, ExplorerError};
 use image::codecs::png::PngEncoder;
 use image::{ColorType, ImageEncoder};
 use std::collections::{HashMap, VecDeque};

@@ -236,7 +236,7 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) 248px;
     grid-template-rows: auto 3px;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     padding: 0;
     user-select: none;
@@ -245,10 +245,10 @@
 
   .address-shell,
   .search-shell {
-    min-height: 40px;
+    min-height: 32px;
     border: 1px solid var(--button-border);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+    border-radius: 6px;
+    background: var(--surface-input);
     color: var(--text-primary);
   }
 
@@ -256,9 +256,8 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    gap: 6px;
-    padding: 0 8px;
-    box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
+    gap: 5px;
+    padding: 0 7px;
     cursor: text;
   }
 
@@ -284,7 +283,7 @@
     width: 18px;
     height: 18px;
     opacity: 0.86;
-    margin-right: 2px;
+    margin-right: 1px;
   }
 
   .crumb-track,
@@ -300,9 +299,9 @@
 
   .segment {
     min-width: 0;
-    padding: 4px 7px;
+    padding: 3px 6px;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
     background: transparent;
     color: var(--text-primary);
     cursor: pointer;
@@ -335,12 +334,12 @@
   .search-input {
     width: 100%;
     min-width: 0;
-    height: 40px;
-    padding: 0 12px;
+    height: 32px;
+    padding: 0 10px;
     border: none;
     background: transparent;
     color: var(--text-primary);
-    font-size: 0.88rem;
+    font-size: 0.84rem;
     outline: none;
   }
 
@@ -355,10 +354,9 @@
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     min-width: 0;
-    padding: 0 10px;
-    gap: 8px;
-    box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
-    background: color-mix(in srgb, var(--surface-raised) 96%, transparent);
+    padding: 0 8px;
+    gap: 6px;
+    background: var(--surface-input);
   }
 
   .search-label {
@@ -399,47 +397,41 @@
     height: 3px;
     overflow: hidden;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-subtle) 60%, transparent);
+    background: color-mix(in srgb, var(--panel-border) 62%, transparent);
   }
 
   .progress-bar {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: -26%;
-    width: 26%;
+    left: 0;
+    width: 100%;
     border-radius: 999px;
     background: color-mix(in srgb, var(--pill-text) 72%, transparent);
     opacity: 0;
-    transition: opacity 140ms ease, transform 160ms ease;
+    transform: scaleX(0.2);
+    transform-origin: left center;
+    transition: opacity 120ms ease, transform 160ms ease;
   }
 
   .progress-bar.active {
     opacity: 1;
-    animation: progress-slide 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: progress-pulse 900ms ease-in-out infinite alternate;
   }
 
   .progress-bar.finishing {
     opacity: 0;
-    left: auto;
-    right: 0;
-    width: 18%;
+    transform: scaleX(1);
     animation: none;
   }
 
-  @keyframes progress-slide {
+  @keyframes progress-pulse {
     0% {
-      left: -26%;
-      width: 24%;
-    }
-
-    50% {
-      width: 34%;
+      transform: scaleX(0.2);
     }
 
     100% {
-      left: 100%;
-      width: 24%;
+      transform: scaleX(0.46);
     }
   }
 
