@@ -2,7 +2,7 @@
 
 ## Immediate
 
-- [ ] Create Rust workspace layout for `core`, `platform-windows`, and `tauri-host` responsibilities.
+- [x] Create Rust workspace layout for `core`, `platform-windows`, and `tauri-host` responsibilities.
 - [x] Design `DirectoryItem`, `DirectorySnapshot`, `SortSpec`, `SearchQuery`, and file operation contracts.
 - [x] Implement a cancellation-aware job system for navigation and enrichment tasks.
 - [x] Build streamed directory listing IPC using Tauri channels/events.

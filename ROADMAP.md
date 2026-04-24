@@ -43,6 +43,7 @@ Build a Windows-first file explorer that feels faster than Files by keeping the 
 - Add copy, move, rename, delete, recycle bin, and conflict UX.
 - Add fast in-folder filtering and sort specs powered by Rust. Done.
 - Add advanced/developer settings for artificial navigation delay and UI testing toggles. Done.
+- Add developer timing traces for navigation/render visibility. Done for development diagnostics; persistent metrics collection remains open.
 
 ## Phase 3 - Rich File Workflows
 

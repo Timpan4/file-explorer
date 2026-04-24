@@ -18,13 +18,23 @@ Windows-first file explorer rebooted from scratch as a Rust application with a t
 
 ## Current State
 
-This repo has been reset and reinitialized on the latest stable Tauri scaffold with:
+This repo is a Tauri 2 + SvelteKit shell with Rust workspace crates for core IPC/job types, Windows platform file-system integration, and the Tauri host:
 
 - `Tauri 2`
 - `SvelteKit`
 - `TypeScript`
 - `bun`
 - `Rust`
+
+The current explorer slice includes Rust-backed streamed directory navigation, snapshot caching, cancellation, native icon hydration, a virtualized details list, breadcrumbs, tabs, keyboard selection/navigation, rename/delete/create-folder actions, Rust-owned sort/filter/search, and developer timing traces.
+
+Current product focus:
+
+- File operation queue with progress, cancellation, and conflict handling.
+- Performance metrics collection for startup, navigation, sort, search, and scroll budgets.
+- Dual-pane state model.
+- Native or shell-backed Windows context menu flow.
+- Full session restore across app restarts.
 
 ## Planning Docs
 
@@ -53,6 +63,6 @@ $env:VITE_EXPLORER_NAV_DELAY_MS = "500"
 bun run tauri dev
 ```
 
-## Immediate Goal
+## Current Goal
 
-Build a single-pane details view backed by a Rust directory engine that streams incremental results into a virtualized Svelte list.
+Move from fast single-pane navigation into daily-driver productivity: reliable file operations, measured performance, dual-pane workflows, shell-native actions, and restart-safe session restore.
