@@ -362,7 +362,7 @@
         </div>
       </div>
 
-      <div class="tabs" role="tablist" aria-label="Open tabs">
+      <div class="tabs" role="tablist" aria-label="Open tabs" data-tauri-drag-region style="app-region: drag;">
         {#each tabs as tab, index (tab.id)}
           <div
             use:tabElementAction={tab.id}
@@ -579,6 +579,7 @@
     color: color-mix(in srgb, var(--text-primary) 76%, var(--text-muted));
     user-select: none;
     -webkit-user-select: none;
+    app-region: no-drag;
   }
 
   .tab::after {
@@ -695,6 +696,7 @@
     line-height: 1;
     outline: none;
     box-sizing: border-box;
+    app-region: no-drag;
   }
 
   .tab-rename-input:focus {
@@ -704,6 +706,7 @@
   :global(.tab-close) {
     color: color-mix(in srgb, var(--text-muted) 88%, transparent);
     opacity: 0.62;
+    app-region: no-drag;
   }
 
   :global(.tab-close:hover) {
@@ -729,6 +732,7 @@
     margin: 0 8px 4px 6px;
     color: color-mix(in srgb, var(--text-muted) 92%, transparent);
     flex-shrink: 0;
+    app-region: no-drag;
   }
 
   :global(.new-tab:hover) {
