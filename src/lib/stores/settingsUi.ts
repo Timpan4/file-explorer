@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-export type SettingsSection = "appearance" | "developer" | "about";
+export type SettingsSection = "general" | "appearance" | "developer" | "about";
 
 type SettingsUiState = {
   open: boolean;
@@ -9,7 +9,7 @@ type SettingsUiState = {
 
 const initialState: SettingsUiState = {
   open: false,
-  section: "appearance"
+  section: "general"
 };
 
 function createSettingsUiStore() {
@@ -17,7 +17,7 @@ function createSettingsUiStore() {
 
   return {
     subscribe: store.subscribe,
-    openSettings(section: SettingsSection = "appearance") {
+    openSettings(section: SettingsSection = "general") {
       store.set({ open: true, section });
     },
     closeSettings() {

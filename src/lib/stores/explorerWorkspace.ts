@@ -3,6 +3,8 @@ import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewW
 import { get, writable } from "svelte/store";
 import { createExplorerSession, type ExplorerSession } from "$lib/stores/explorerSessionCore";
 import { createExplorerUiStore, type ExplorerUiStore } from "$lib/stores/explorerUiCore";
+import { createWorkspaceSessionPersistence, readSession, type SessionSnapshot } from "$lib/stores/explorerWorkspaceSession";
+import { settings } from "$lib/stores/settings";
 import type {
   ExplorerTabDetachResult,
   ExplorerTabId,
@@ -76,6 +78,15 @@ function createExplorerWorkspace() {
   let detachResultUnlisten: (() => void) | null = null;
   let importTabUnlisten: (() => void) | null = null;
   let registryIntervalId: number | null = null;
+  let settingsUnsubscribe: (() => void) | null = null;
+  const sessionPersistence = createWorkspaceSessionPersistence({
+    readActiveTabId: () => get(store).activeTabId,
+    readTabOrder: () => [...tabs.keys()],
+    readTabs: () => [...tabs.values()].map((tabRecord) => ({
+      ...tabRecord.session.createSnapshot(),
+      customTitle: tabRecord.customTitle
+    }))
+  });
 
   function subscribe(run: Parameters<typeof store.subscribe>[0]) {
     return store.subscribe(run);
@@ -86,11 +97,39 @@ function createExplorerWorkspace() {
     store.set(createInitialWorkspaceState(windowId));
     await ensureEventListeners();
     startWindowRegistry();
+    const canPersistSession = !options.bootstrap?.tab;
+    settingsUnsubscribe?.();
+
+    settingsUnsubscribe = settings.subscribe((currentSettings) => {
+      if (!currentSettings.sessionRestoreEnabled) {
+        sessionPersistence.disable();
+      } else if (canPersistSession) {
+        sessionPersistence.enable();
+      }
+    });
+
+    if (canPersistSession && get(settings).sessionRestoreEnabled) {
+      sessionPersistence.enable();
+    } else {
+      sessionPersistence.pause();
+    }
 
     if (options.bootstrap?.tab) {
       await createTab({ snapshot: options.bootstrap.tab, makeActive: true });
     } else {
-      await createTab({ makeActive: true });
+      if (get(settings).sessionRestoreEnabled) {
+        const sessionSnapshot = readSession();
+        if (sessionSnapshot && sessionSnapshot.tabOrder.length > 0) {
+          await restoreSession(sessionSnapshot);
+          if (tabs.size === 0) {
+            await createTab({ makeActive: true });
+          }
+        } else {
+          await createTab({ makeActive: true });
+        }
+      } else {
+        await createTab({ makeActive: true });
+      }
     }
 
     store.update((state) => ({ ...state, initialized: true }));
@@ -121,6 +160,7 @@ function createExplorerWorkspace() {
       record.title = record.customTitle ?? record.derivedTitle;
       record.iconDataUrl = findMatchingSidebarRoot(state.currentPath, state.roots)?.iconDataUrl;
       syncState();
+      sessionPersistence.markDirty();
     });
 
     tabs.set(tabId, record);
@@ -128,6 +168,22 @@ function createExplorerWorkspace() {
     await session.initialize(snapshot ? { path: snapshot.currentPath, snapshot } : {});
     syncState(get(store).activeTabId ?? tabId);
     return tabId;
+  }
+
+  async function restoreSession(sessionSnapshot: SessionSnapshot) {
+    const snapshotsById = new Map(sessionSnapshot.tabs.map((snapshot) => [snapshot.tabId, snapshot]));
+    const orderedSnapshots = sessionSnapshot.tabOrder
+      .map((tabId) => snapshotsById.get(tabId))
+      .filter((snapshot): snapshot is ExplorerTabSnapshot => snapshot !== undefined);
+
+    for (const tabSnapshot of orderedSnapshots) {
+      await createTab({ snapshot: tabSnapshot, preserveTabId: true });
+    }
+
+    const restoredActiveTabId = sessionSnapshot.activeTabId;
+    if (restoredActiveTabId && tabs.has(restoredActiveTabId)) {
+      syncState(restoredActiveTabId);
+    }
   }
 
   async function newTab() {
@@ -143,6 +199,7 @@ function createExplorerWorkspace() {
     record.customTitle = normalizeCustomTabTitle(title);
     record.title = record.customTitle ?? record.derivedTitle;
     syncState();
+    sessionPersistence.markDirty();
   }
 
   function clearTabTitle(tabId: ExplorerTabId) {
@@ -154,6 +211,7 @@ function createExplorerWorkspace() {
     record.customTitle = null;
     record.title = record.derivedTitle;
     syncState();
+    sessionPersistence.markDirty();
   }
 
   function moveTabBefore(tabId: ExplorerTabId, targetTabId: ExplorerTabId | null) {
@@ -198,6 +256,7 @@ function createExplorerWorkspace() {
     }
 
     syncState(tabId);
+    sessionPersistence.markDirty();
   }
 
   async function closeTab(tabId: ExplorerTabId) {
@@ -210,12 +269,14 @@ function createExplorerWorkspace() {
     if (tabs.size === 1) {
       disposeTab(tabId);
       await createTab({ makeActive: true });
+      sessionPersistence.markDirty();
       return;
     }
 
     if (activeTabId && activeTabId !== tabId) {
       disposeTab(tabId);
       syncState(activeTabId);
+      sessionPersistence.markDirty();
       return;
     }
 
@@ -224,6 +285,7 @@ function createExplorerWorkspace() {
     disposeTab(tabId);
     const nextTabId = tabIds[currentIndex + 1] ?? tabIds[currentIndex - 1] ?? [...tabs.keys()][0] ?? null;
     syncState(nextTabId);
+    sessionPersistence.markDirty();
   }
 
   async function detachTab(tabId: ExplorerTabId, screenPosition?: { x: number; y: number }) {
@@ -357,11 +419,15 @@ function createExplorerWorkspace() {
   }
 
   function dispose() {
+    sessionPersistence.saveNow();
     disposeTabs();
+    sessionPersistence.pause();
     detachResultUnlisten?.();
     importTabUnlisten?.();
     detachResultUnlisten = null;
     importTabUnlisten = null;
+    settingsUnsubscribe?.();
+    settingsUnsubscribe = null;
     stopWindowRegistry();
     store.set(createInitialWorkspaceState(windowId));
   }
@@ -444,6 +510,7 @@ function createExplorerWorkspace() {
     }
 
     syncState(get(store).activeTabId);
+    sessionPersistence.markDirty();
   }
 
   function startWindowRegistry() {
