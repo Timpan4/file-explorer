@@ -285,10 +285,8 @@
   }
 
   .feature-row {
-    background:
-      linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 72%, transparent), transparent 58%),
-      color-mix(in srgb, var(--surface-subtle) 80%, transparent);
-    border-color: color-mix(in srgb, var(--selection-border) 46%, var(--panel-border));
+    background: color-mix(in srgb, var(--surface-subtle) 78%, transparent);
+    border-color: color-mix(in srgb, var(--panel-border) 88%, transparent);
   }
 
   .choice-copy {

@@ -92,7 +92,7 @@ export function classifyOperation(
     return "sort";
   }
 
-  if (targetPath !== state.currentPath) {
+  if (!isSameExplorerPath(targetPath, state.currentPath)) {
     return state.items.length > 0 ? "warm_navigation" : "cold_navigation";
   }
 
@@ -100,7 +100,7 @@ export function classifyOperation(
 }
 
 export function shouldPreserveVisibleRows(state: ExplorerState, targetPath: string) {
-  return state.currentPath === targetPath && state.items.length > 0;
+  return isSameExplorerPath(state.currentPath, targetPath) && state.items.length > 0;
 }
 
 export function resolveCompletedOperationType(

@@ -99,20 +99,7 @@ function createExplorerWorkspace() {
     startWindowRegistry();
     const canPersistSession = !options.bootstrap?.tab;
     settingsUnsubscribe?.();
-
-    settingsUnsubscribe = settings.subscribe((currentSettings) => {
-      if (!currentSettings.sessionRestoreEnabled) {
-        sessionPersistence.disable();
-      } else if (canPersistSession) {
-        sessionPersistence.enable();
-      }
-    });
-
-    if (canPersistSession && get(settings).sessionRestoreEnabled) {
-      sessionPersistence.enable();
-    } else {
-      sessionPersistence.pause();
-    }
+    sessionPersistence.pause();
 
     if (options.bootstrap?.tab) {
       await createTab({ snapshot: options.bootstrap.tab, makeActive: true });
@@ -133,6 +120,14 @@ function createExplorerWorkspace() {
     }
 
     store.update((state) => ({ ...state, initialized: true }));
+
+    settingsUnsubscribe = settings.subscribe((currentSettings) => {
+      if (!currentSettings.sessionRestoreEnabled) {
+        sessionPersistence.disable();
+      } else if (canPersistSession) {
+        sessionPersistence.enable();
+      }
+    });
   }
 
   async function createTab(options: { snapshot?: ExplorerTabSnapshot; makeActive?: boolean; preserveTabId?: boolean } = {}) {

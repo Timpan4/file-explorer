@@ -150,7 +150,11 @@ export function readSession(): SessionSnapshot | null {
       return null;
     }
 
-    const parsed = JSON.parse(raw) as SessionSnapshot;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isSessionSnapshotCandidate(parsed)) {
+      return null;
+    }
+
     if (parsed.version !== 1) {
       return null;
     }
@@ -163,16 +167,86 @@ export function readSession(): SessionSnapshot | null {
       return null;
     }
 
-    if (!parsed.tabOrder || !Array.isArray(parsed.tabOrder)) {
+    const tabIds = new Set(parsed.tabOrder);
+    if (tabIds.size !== parsed.tabOrder.length) {
       return null;
     }
 
-    if (!parsed.tabs || !Array.isArray(parsed.tabs)) {
+    if (parsed.activeTabId !== null && !tabIds.has(parsed.activeTabId)) {
       return null;
     }
 
-    return parsed;
+    const snapshotIds = new Set(parsed.tabs.map((tab) => tab.tabId));
+    if (snapshotIds.size !== parsed.tabs.length || snapshotIds.size !== tabIds.size) {
+      return null;
+    }
+
+    if (parsed.tabs.some((tab) => !tabIds.has(tab.tabId))) {
+      return null;
+    }
+
+    return parsed satisfies SessionSnapshot;
   } catch {
     return null;
   }
+}
+
+function isSessionSnapshotCandidate(value: unknown): value is SessionSnapshot {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return candidate.version === 1
+    && Number.isFinite(candidate.savedAt)
+    && isTabIdOrNull(candidate.activeTabId)
+    && Array.isArray(candidate.tabOrder)
+    && candidate.tabOrder.every(isTabId)
+    && Array.isArray(candidate.tabs)
+    && candidate.tabs.every(isExplorerTabSnapshot);
+}
+
+function isExplorerTabSnapshot(value: unknown): value is ExplorerTabSnapshot {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return isTabId(candidate.tabId)
+    && typeof candidate.currentPath === "string"
+    && (candidate.customTitle === null || typeof candidate.customTitle === "string")
+    && isSortSpec(candidate.sort)
+    && typeof candidate.stagedSearchQuery === "string"
+    && typeof candidate.appliedSearchQuery === "string"
+    && isStringArray(candidate.selectedIds)
+    && isStringOrNull(candidate.focusedItemId)
+    && isStringOrNull(candidate.anchorItemId)
+    && isStringArray(candidate.backHistory)
+    && isStringArray(candidate.forwardHistory);
+}
+
+function isSortSpec(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return ["name", "type", "modifiedAt", "size"].includes(String(candidate.field))
+    && ["asc", "desc"].includes(String(candidate.direction));
+}
+
+function isTabId(value: unknown): value is ExplorerTabId {
+  return typeof value === "string" && value.length > 0;
+}
+
+function isTabIdOrNull(value: unknown): value is ExplorerTabId | null {
+  return value === null || isTabId(value);
+}
+
+function isStringOrNull(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
