@@ -5,6 +5,7 @@ export type ThemePreference = "system" | "light" | "dark";
 export type SettingsState = {
   themePreference: ThemePreference;
   artificialNavDelayMs: number;
+  sessionRestoreEnabled: boolean;
 };
 
 const STORAGE_KEY = "file-explorer.settings.v1";
@@ -12,7 +13,8 @@ const DEFAULT_DELAY = parseDelay(import.meta.env.VITE_EXPLORER_NAV_DELAY_MS);
 
 const defaults: SettingsState = {
   themePreference: "system",
-  artificialNavDelayMs: DEFAULT_DELAY
+  artificialNavDelayMs: DEFAULT_DELAY,
+  sessionRestoreEnabled: true
 };
 
 function createSettingsStore() {
@@ -38,6 +40,9 @@ function createSettingsStore() {
         artificialNavDelayMs: clampDelay(artificialNavDelayMs)
       }));
     },
+    setSessionRestoreEnabled(sessionRestoreEnabled: boolean) {
+      store.update((state) => ({ ...state, sessionRestoreEnabled }));
+    },
     reset() {
       store.set(defaults);
     }
@@ -59,7 +64,8 @@ function loadInitialState(): SettingsState {
     const parsed = JSON.parse(raw) as Partial<SettingsState>;
     const state: SettingsState = {
       themePreference: isThemePreference(parsed.themePreference) ? parsed.themePreference : defaults.themePreference,
-      artificialNavDelayMs: clampDelay(parsed.artificialNavDelayMs ?? defaults.artificialNavDelayMs)
+      artificialNavDelayMs: clampDelay(parsed.artificialNavDelayMs ?? defaults.artificialNavDelayMs),
+      sessionRestoreEnabled: typeof parsed.sessionRestoreEnabled === "boolean" ? parsed.sessionRestoreEnabled : defaults.sessionRestoreEnabled
     };
 
     applyThemePreference(state.themePreference);

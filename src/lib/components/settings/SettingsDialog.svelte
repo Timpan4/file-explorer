@@ -4,9 +4,10 @@
   import { settingsUi, type SettingsSection } from "$lib/stores/settingsUi";
 
   let { open, section } = $derived($settingsUi);
-  let { themePreference, artificialNavDelayMs } = $derived($settings);
+  let { themePreference, artificialNavDelayMs, sessionRestoreEnabled } = $derived($settings);
 
   const sections: Array<{ id: SettingsSection; label: string }> = [
+    { id: "general", label: "General" },
     { id: "appearance", label: "Appearance" },
     { id: "developer", label: "Developer" },
     { id: "about", label: "About" }
@@ -20,6 +21,10 @@
 
   function close() {
     settingsUi.closeSettings();
+  }
+
+  function updateSessionRestore(event: Event) {
+    settings.setSessionRestoreEnabled((event.currentTarget as HTMLInputElement).checked);
   }
 </script>
 
@@ -66,7 +71,29 @@
         </nav>
 
         <div class="panel">
-          {#if section === "appearance"}
+          {#if section === "general"}
+            <header class="section-header">
+              <p class="eyebrow">General</p>
+              <h3>Startup</h3>
+            </header>
+
+            <div class="stack">
+              <label class="setting-row choice-row feature-row">
+                <span class="choice-copy">
+                  <strong>Restore previous session</strong>
+                  <small>Reopen tabs, navigation state, and selections on startup.</small>
+                </span>
+                <input
+                  aria-label="Restore previous session"
+                  checked={sessionRestoreEnabled}
+                  class="switch-input"
+                  onchange={updateSessionRestore}
+                  role="switch"
+                  type="checkbox"
+                />
+              </label>
+            </div>
+          {:else if section === "appearance"}
             <header class="section-header">
               <p class="eyebrow">Appearance</p>
               <h3>Theme</h3>
@@ -257,6 +284,11 @@
     background: color-mix(in srgb, var(--surface-subtle) 74%, transparent);
   }
 
+  .feature-row {
+    background: color-mix(in srgb, var(--surface-subtle) 78%, transparent);
+    border-color: color-mix(in srgb, var(--panel-border) 88%, transparent);
+  }
+
   .choice-copy {
     display: grid;
     gap: 4px;
@@ -292,6 +324,63 @@
     border-radius: 8px;
     background: var(--surface-input);
     color: var(--text-primary);
+  }
+
+  .switch-input {
+    appearance: none;
+    position: relative;
+    flex: 0 0 auto;
+    width: 42px;
+    height: 24px;
+    margin: 0;
+    border: 1px solid color-mix(in srgb, var(--button-border) 84%, var(--text-muted));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-input) 88%, var(--text-muted) 12%);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.12);
+    cursor: pointer;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .switch-input::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.28);
+    transition:
+      transform 160ms ease,
+      background 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .switch-input:checked {
+    border-color: color-mix(in srgb, var(--accent-text) 42%, var(--selection-border));
+    background: color-mix(in srgb, var(--accent-soft-strong) 86%, var(--surface-input));
+    box-shadow:
+      inset 0 1px 2px rgba(15, 23, 42, 0.1),
+      0 0 0 1px color-mix(in srgb, var(--accent-text) 12%, transparent);
+  }
+
+  .switch-input:checked::before {
+    transform: translateX(18px);
+    background: var(--accent-text);
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.32);
+  }
+
+  .switch-input:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .switch-input:hover {
+    border-color: color-mix(in srgb, var(--accent-text) 34%, var(--button-border));
   }
 
   .actions-row {

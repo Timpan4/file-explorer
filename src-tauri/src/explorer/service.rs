@@ -7,6 +7,7 @@ use file_explorer_core::directory::{
     SidebarRootKind, SnapshotChunk, SnapshotCompleted, SnapshotStarted,
 };
 use file_explorer_core::jobs::{JobHandle, JobRegistry};
+use file_explorer_core::projection;
 use file_explorer_platform_windows::windows::{fs, icons};
 use std::collections::{BTreeSet, HashMap};
 use std::sync::{Arc, Mutex};
@@ -404,7 +405,7 @@ impl ExplorerService {
         }
 
         let project_started_at = Instant::now();
-        let entries = fs::project_directory_snapshot(
+        let entries = projection::project_directory_snapshot(
             resolved_snapshot.items.as_ref(),
             request.query.as_deref(),
             request.sort.clone(),
