@@ -1,8 +1,8 @@
 # Contributing
 
-This repo is a Windows-first Tauri 2 + SvelteKit + Rust file explorer. Contributions should preserve the central boundary: Rust owns filesystem behavior; Svelte renders typed state and sends typed user intent.
+This is a Windows-first Tauri 2, SvelteKit, and Rust file explorer. Keep the central boundary intact: Rust owns filesystem behavior; Svelte renders typed state and sends typed user intent.
 
-## Start Here
+## Read First
 
 Before changing code, read:
 
@@ -14,7 +14,7 @@ Before changing code, read:
 
 For UI work, also read [DESIGN.md](DESIGN.md).
 
-## Development Setup
+## Setup
 
 ```sh
 bun install
@@ -30,15 +30,15 @@ cargo check
 cargo test
 ```
 
-## Contribution Rules
+## Rules
 
-- Keep diffs focused on one logical change.
+- Keep each change focused on one outcome.
 - Do not move filesystem behavior into Svelte.
 - Do not add dependencies without verifying the current stable version from an authoritative source.
 - Keep large lists virtualized.
-- Keep expensive enrichments off the navigation hot path.
-- Preserve same-path refresh behavior: keep current content visible until a replacement snapshot is ready.
-- Update [ROADMAP.md](ROADMAP.md) or [TODOS.md](TODOS.md) when a tracked item is completed.
+- Keep expensive enrichments off navigation first paint.
+- Preserve same-path refresh behavior: keep current rows visible until the replacement snapshot is ready.
+- Update [ROADMAP.md](ROADMAP.md) or [TODOS.md](TODOS.md) when tracked work lands.
 - Add an ADR under [docs/decisions/](docs/decisions/) before changing a locked-in boundary.
 
 ## Git Workflow
@@ -49,23 +49,21 @@ Before any git write, check the current branch:
 git branch --show-current
 ```
 
-If the branch is `gitbutler/workspace`, use GitButler for writes:
+If the branch is `gitbutler/workspace`, use GitButler for all writes:
 
-- use `but` commands for add/commit/push/branch/PR operations
+- use `but` for add, commit, push, branch, and PR operations
 - use `but diff --no-tui` for diffs
-- do not leave the workspace branch
-- do not fall back to raw git writes if `but` is unavailable
+- stay on `gitbutler/workspace`
+- if `but` is unavailable or unclear, run `but --help`; do not fall back to raw git writes
 
-Branch names should use a concrete prefix such as `feat/`, `fix/`, `docs/`, `refactor/`, `test/`, `chore/`, or `perf/`. Commit subjects should describe one concrete outcome. Do not add AI or coauthor attribution unless requested.
+Branch names should use `feat/`, `fix/`, `docs/`, `refactor/`, `test/`, `chore/`, or `perf/` with a concrete kebab-case slug. Commit subjects should state one concrete outcome. Do not add AI or coauthor attribution unless requested.
 
-## Pull Request Expectations
+## Before Hand-off
 
-Before opening a PR or handing work back, run through [docs/handbook/pr-checklist.md](docs/handbook/pr-checklist.md).
-
-At minimum, report:
+Run through [docs/handbook/pr-checklist.md](docs/handbook/pr-checklist.md). Report:
 
 - what changed
 - what checks ran
-- what remains unverified, if anything
+- what remains unverified
 
 Docs-only changes usually need link and content review rather than a full app build.
