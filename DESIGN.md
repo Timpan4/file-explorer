@@ -163,7 +163,7 @@ Preserve Windows shell expectations:
 - intuitive multi-select
 - predictable right-click behavior
 - stable inline rename
-- drag and drop affordances
+- drag-and-drop affordances
 - obvious keyboard focus states
 - keyboard navigation even when no row is focused
 
