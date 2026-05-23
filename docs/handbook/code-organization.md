@@ -1,64 +1,64 @@
 # Code Organization
 
-Where things go. The target shape lives in [architecture-blueprint.md](../architecture-blueprint.md); this page is the rules.
+This page says where code belongs. The target architecture lives in [architecture-blueprint.md](../architecture-blueprint.md).
 
-## Frontend (`src/`)
+## Frontend
 
-### `src/lib/components/explorer/`
+`src/lib/components/explorer/`
 
 Explorer-specific UI: shell layout, panes, rows, headers, breadcrumbs, command bars, context menus, loading/error/empty states, and status bar.
 
-### `src/lib/components/settings/`
+`src/lib/components/settings/`
 
-Settings dialogs and controls. Settings persistence helpers belong in stores or pure helpers, not inside visual components.
+Settings dialogs and controls. Settings persistence helpers belong in stores or pure helpers, not visual components.
 
-### `src/lib/components/ui/`
+`src/lib/components/ui/`
 
-Generic, feature-agnostic primitives only. A component does not belong here if it is used only by the explorer surface.
+Generic primitives only. A component does not belong here if only the explorer surface uses it.
 
-### `src/lib/components/window/`
+`src/lib/components/window/`
 
 Window chrome and frame-level UI.
 
-### `src/lib/stores/`
+`src/lib/stores/`
 
 Svelte stores for UI state, session state, workspace state, settings, notifications, dialogs, and action orchestration. Stores may coordinate Tauri calls but must not implement filesystem logic that belongs in Rust.
 
-### `src/lib/tauri/`
+`src/lib/tauri/`
 
-Typed wrappers around Tauri commands. Components should import wrappers from here instead of calling raw `invoke()`.
+Typed wrappers around Tauri commands. Components import wrappers from here instead of calling raw `invoke()`.
 
-### `src/lib/types/`
+`src/lib/types/`
 
 Frontend copies of Rust IPC contracts and action types.
 
-### `src/lib/utils/`
+`src/lib/utils/`
 
-Pure frontend utilities. No filesystem access, no Tauri invoke calls, and no component code.
+Pure frontend helpers only. No filesystem access, Tauri invoke calls, or component code.
 
-## Rust (`crates/` and `src-tauri/`)
+## Rust And Tauri
 
-### `crates/core/`
+`crates/core/`
 
-Portable explorer contracts and logic: IPC types, directory snapshots, job scheduling, cancellation, sorting/filtering/searching contracts, and cache-friendly models.
+Portable explorer contracts and logic: IPC types, directory snapshots, job scheduling, cancellation, sorting/filtering/search contracts, and cache-friendly models.
 
-### `crates/platform-windows/`
+`crates/platform-windows/`
 
-Windows-specific filesystem and shell integration. Windows API details stay here and should not leak into frontend code.
+Windows-specific filesystem and shell integration. Windows API details stay here and do not leak into frontend code.
 
-### `src-tauri/src/commands/`
+`src-tauri/src/commands/`
 
-Small Tauri command handlers. Commands validate input, call domain services, and serialize results/errors. They should not grow into large filesystem engines.
+Small Tauri command handlers. Commands validate input, call domain services, and serialize results/errors. They should not grow into filesystem engines.
 
-### `src-tauri/src/explorer/`
+`src-tauri/src/explorer/`
 
 Host-side explorer orchestration that connects commands, core models, and platform services.
 
-## New top-level directories
+## New Top-Level Directories
 
-Adding a new top-level source directory under `src/`, `crates/`, or `src-tauri/src/` requires a one-line entry in this file before the directory becomes a pattern.
+Adding a new top-level source directory under `src/`, `crates/`, or `src-tauri/src/` requires a one-line entry here before the directory becomes a pattern.
 
-## Cross-cutting rules
+## Cross-Cutting Rules
 
 - Frontend never performs real filesystem work directly.
 - Frontend never executes shell commands.
