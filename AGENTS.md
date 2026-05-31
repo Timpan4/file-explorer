@@ -162,7 +162,7 @@ Write an ADR before changing:
 
 - Run the relevant checks before claiming work complete.
 - Frontend type or component changes should pass `bun run typecheck`.
-- Frontend behavior changes should pass relevant `bun test` coverage.
+- Frontend behavior changes should pass relevant `bun run test` coverage.
 - Production build changes should pass `bun run build` when practical.
 - Rust backend changes should pass `bun run rust:check`.
 - Rust behavior changes should run `bun run rust:test` or a targeted crate test.

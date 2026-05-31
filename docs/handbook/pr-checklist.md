@@ -5,7 +5,7 @@ Run this before opening a PR or marking an agent task done.
 ## Verification
 
 - [ ] Frontend touched: `bun run typecheck` passes.
-- [ ] Frontend behavior touched: relevant `bun test` coverage passes.
+- [ ] Frontend behavior touched: relevant `bun run test` coverage passes.
 - [ ] `bun run build` passes if build output, routing, or production behavior changed.
 - [ ] Backend touched: `bun run rust:check` passes.
 - [ ] Backend behavior touched: relevant `bun run rust:test` or targeted tests pass.

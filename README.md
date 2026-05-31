@@ -23,7 +23,7 @@ Useful checks:
 
 ```sh
 bun run typecheck
-bun test
+bun run test
 bun run rust:test
 bun run rust:check
 bun run check
