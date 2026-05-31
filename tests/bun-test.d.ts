@@ -27,3 +27,16 @@ declare module "bun:test" {
   }
   export function test(name: string, callback: TestCallback): void;
 }
+
+declare const Bun: {
+  argv: string[];
+  spawn(
+    command: string[],
+    options: { stdout: "inherit"; stderr: "inherit" }
+  ): { exited: Promise<number> };
+};
+
+declare const process: {
+  platform: string;
+  exit(code?: number): never;
+};
