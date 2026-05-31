@@ -4,10 +4,12 @@ Run this before opening a PR or marking an agent task done.
 
 ## Verification
 
-- [ ] `bun run check` passes if frontend code changed.
+- [ ] Frontend touched: `bun run typecheck` passes.
+- [ ] Frontend behavior touched: relevant `bun run test` coverage passes.
 - [ ] `bun run build` passes if build output, routing, or production behavior changed.
-- [ ] `cargo check` passes if Rust code changed.
-- [ ] Relevant `cargo test` or targeted tests pass if behavior changed.
+- [ ] Backend touched: `bun run rust:check` passes.
+- [ ] Backend behavior touched: relevant `bun run rust:test` or targeted tests pass.
+- [ ] Full local bundle passes with `bun run check` before hand-off when practical.
 - [ ] The app starts and the affected flow works if Tauri integration changed.
 
 ## Architecture

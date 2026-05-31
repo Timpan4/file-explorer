@@ -161,10 +161,12 @@ Write an ADR before changing:
 ## Verification
 
 - Run the relevant checks before claiming work complete.
-- Frontend changes should pass `bun run check`.
+- Frontend type or component changes should pass `bun run typecheck`.
+- Frontend behavior changes should pass relevant `bun run test` coverage.
 - Production build changes should pass `bun run build` when practical.
-- Rust backend changes should pass `cargo check`.
-- Rust behavior changes should run `cargo test` or a targeted crate test.
+- Rust backend changes should pass `bun run rust:check`.
+- Rust behavior changes should run `bun run rust:test` or a targeted crate test.
+- Full local verification should pass `bun run check` before hand-off when practical.
 - Tauri integration changes should be smoke tested with `bun run tauri dev` when practical.
 - If a check cannot run, state the exact blocker and what remains unverified.
 - When completing roadmap work, update [ROADMAP.md](ROADMAP.md) or [TODOS.md](TODOS.md).

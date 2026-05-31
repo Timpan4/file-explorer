@@ -11,19 +11,24 @@ bun install
 bun run tauri dev
 ```
 
-Frontend checks:
+Common checks:
 
 ```sh
+bun run typecheck
+bun run test
+bun run rust:test
+bun run rust:check
 bun run check
 bun run build
 ```
 
-Rust checks:
+`bun run check` runs the current local verification bundle:
 
 ```sh
-cargo check
-cargo test
+bun run typecheck && bun run test && bun run rust:test && bun run rust:check
 ```
+
+`bun run rust:test` and `bun run rust:check` run the full Rust workspace on Windows. On non-Windows hosts they run `file-explorer-core` only, because `crates/platform-windows` and the Tauri host bind to Windows APIs. Run the Windows scripts on a Windows machine before claiming platform or Tauri behavior complete.
 
 To slow navigation for UI testing, set `VITE_EXPLORER_NAV_DELAY_MS` before starting dev.
 
@@ -52,6 +57,8 @@ Use:
 
 - focused examples for regressions and user-visible behavior
 - contract tests when IPC shapes or frontend wrappers can drift
+- frontend tests for typed wrappers, pure state logic, path helpers, selection behavior, and stable renderer contracts
+- Rust tests for filesystem contracts, snapshot/cache behavior, job cancellation, projection/sort invariants, and Windows platform helpers
 - property-style tests for deterministic logic with compact invariants, such as sort specs, path normalization, selection math, and cache keys
 
 Do not require property tests for Svelte rendering, native Windows shell integration, or Tauri commands that need live OS state unless the risk justifies the setup.
@@ -61,10 +68,12 @@ Do not require property tests for Svelte rendering, native Windows shell integra
 Run the checks that match the change:
 
 - docs-only change: inspect links and headings; no app build is usually required
-- frontend change: `bun run check`
+- frontend type or component change: `bun run typecheck`
+- frontend behavior change: relevant `bun test` coverage
 - production build, routing, or static output change: `bun run build`
-- Rust backend change: `cargo check`
-- Rust behavior change: `cargo test` or targeted crate tests
+- Rust backend change: `bun run rust:check`
+- Rust behavior change: `bun run rust:test` or targeted crate tests
+- full local verification before hand-off: `bun run check`
 - Tauri integration change: `bun run tauri dev` smoke test when practical
 
 If a check cannot run locally, report the blocker and what remains unverified.

@@ -102,3 +102,61 @@ impl Default for JobRegistry {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cancel_tab_cancels_the_latest_job_for_that_tab() {
+        let registry = JobRegistry::new();
+        let first = JobHandle::new();
+        let second = JobHandle::new();
+
+        registry.insert("tab-1".to_string(), "job-1".to_string(), first.clone());
+        registry.insert("tab-1".to_string(), "job-2".to_string(), second.clone());
+
+        registry.cancel_tab("tab-1", CancelReason::Superseded);
+
+        assert!(!first.is_cancelled());
+        assert!(second.is_cancelled());
+        assert!(matches!(
+            second.cancel_reason(),
+            Some(CancelReason::Superseded)
+        ));
+    }
+
+    #[test]
+    fn removing_an_old_job_keeps_the_latest_tab_job_active() {
+        let registry = JobRegistry::new();
+        let first = JobHandle::new();
+        let second = JobHandle::new();
+
+        registry.insert("tab-1".to_string(), "job-1".to_string(), first.clone());
+        registry.insert("tab-1".to_string(), "job-2".to_string(), second.clone());
+        registry.remove("job-1");
+
+        registry.cancel_tab("tab-1", CancelReason::Explicit);
+
+        assert!(!first.is_cancelled());
+        assert!(second.is_cancelled());
+        assert!(matches!(
+            second.cancel_reason(),
+            Some(CancelReason::Explicit)
+        ));
+    }
+
+    #[test]
+    fn removing_the_active_job_clears_tab_cancellation_target() {
+        let registry = JobRegistry::new();
+        let handle = JobHandle::new();
+
+        registry.insert("tab-1".to_string(), "job-1".to_string(), handle.clone());
+        registry.remove("job-1");
+
+        registry.cancel_tab("tab-1", CancelReason::Explicit);
+
+        assert!(!handle.is_cancelled());
+        assert!(registry.get("job-1").is_none());
+    }
+}
