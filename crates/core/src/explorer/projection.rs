@@ -172,4 +172,42 @@ mod tests {
         assert_eq!(projected[1].name, "Beta");
         assert_eq!(projected[2].name, "alpha.txt");
     }
+
+    #[test]
+    fn project_directory_snapshot_filters_case_insensitive_paths_and_kinds() {
+        let items = vec![
+            item("Alpha.txt", r"C:\\Work\\Reports\\Alpha.txt", DirectoryItemKind::File),
+            item("Beta", r"C:\\Work\\Beta", DirectoryItemKind::Directory),
+            item("Link", r"C:\\Work\\Link", DirectoryItemKind::Symlink),
+        ];
+
+        let path_match = project_directory_snapshot(&items, Some(" reports "), None);
+        let kind_match = project_directory_snapshot(&items, Some("SYMLINK"), None);
+
+        assert_eq!(path_match, vec![items[0].clone()]);
+        assert_eq!(kind_match, vec![items[2].clone()]);
+    }
+
+    #[test]
+    fn project_directory_snapshot_uses_name_tiebreaker_within_directory_groups() {
+        let mut alpha_file = item("alpha.txt", r"C:\\Work\\alpha.txt", DirectoryItemKind::File);
+        alpha_file.size = Some(10);
+        let mut zoo_file = item("Zoo.txt", r"C:\\Work\\Zoo.txt", DirectoryItemKind::File);
+        zoo_file.size = Some(10);
+        let directory = item("Reports", r"C:\\Work\\Reports", DirectoryItemKind::Directory);
+
+        let projected = project_directory_snapshot(
+            &[zoo_file, alpha_file, directory],
+            None,
+            Some(SortSpec {
+                field: SortField::Size,
+                direction: SortDirection::Asc,
+            }),
+        );
+
+        assert_eq!(
+            projected.iter().map(|item| item.name.as_str()).collect::<Vec<_>>(),
+            vec!["Reports", "alpha.txt", "Zoo.txt"]
+        );
+    }
 }
