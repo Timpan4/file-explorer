@@ -1,32 +1,32 @@
 # Docs Index
 
-Documentation for the Windows-first file explorer. Read in roughly this order: product intent first, then architecture constraints, then workflow and tracking.
+Documentation for the Windows-first file explorer. Read product intent first, then architecture, workflow, and the handbook.
 
-## Start here
+## Start Here
 
-- [Product Vision](product-vision.md): what this app is, who it is for, UX posture, performance posture, and Windows shell expectations.
-- [Architecture Blueprint](architecture-blueprint.md): Rust/Svelte/Tauri boundaries, module layout, IPC contracts, and future extension points.
+- [Product Vision](product-vision.md): product identity, UX posture, performance posture, and shell expectations.
+- [Architecture Blueprint](architecture-blueprint.md): Rust/Svelte/Tauri boundaries, module layout, IPC contracts, and extension points.
 - [Design Brief](../DESIGN.md): visual and interaction authority for the Explorer-like shell.
 
-## Conventions and handbook
+## Workflow
 
-- [Engineering Handbook](handbook/): code organization, file-size guidance, hygiene rules, and completion checklist.
-- [Development Workflow](development-workflow.md): Bun/Cargo commands, verification expectations, and testing standard.
-- [Contributor Guide](../CONTRIBUTING.md): human contributor entry point for setup, scope, checks, and PR expectations.
+- [Development Workflow](development-workflow.md): setup, commands, dependency policy, checks, and testing standard.
+- [Engineering Handbook](handbook/): code organization, split guidance, hygiene rules, and completion checklist.
+- [Contributor Guide](../CONTRIBUTING.md): human contributor setup, scope, checks, and PR expectations.
 
-## Constraints and decisions
+## Decisions
 
-- [Architecture Decision Records](decisions/): decisions that require a new ADR to change.
-- [Agent Guide](../AGENTS.md): agent-facing rules, command contracts, UX rules, ADR triggers, and verification expectations.
+- [Architecture Decision Records](decisions/): locked-in decisions and ADR triggers.
+- [Agent Guide](../AGENTS.md): agent-facing architecture, UX, verification, and Git rules.
 
-## Work tracking
+## Tracking
 
-- [Roadmap](../ROADMAP.md): product phases, performance budgets, and non-negotiables.
+- [Roadmap](../ROADMAP.md): phases, budgets, and non-negotiables.
 - [TODOs](../TODOS.md): near-term implementation backlog.
-- [Release Notes and Flow](release.md): maintainer release expectations for future beta builds.
+- [Release Flow](release.md): release readiness and future publishing checklist.
 
-## Reading shortcuts
+## Shortcuts
 
-- Editing UI shell behavior: read [Product Vision](product-vision.md), [Design Brief](../DESIGN.md), and [handbook/code-organization.md](handbook/code-organization.md).
-- Editing Rust filesystem behavior: read [Architecture Blueprint](architecture-blueprint.md), [Development Workflow](development-workflow.md), and [decisions/0001-rust-owned-filesystem-boundary.md](decisions/0001-rust-owned-filesystem-boundary.md).
-- Finishing an agent task: read [handbook/pr-checklist.md](handbook/pr-checklist.md).
+- UI shell behavior: read [Product Vision](product-vision.md), [Design Brief](../DESIGN.md), and [code organization](handbook/code-organization.md).
+- Rust filesystem behavior: read [Architecture Blueprint](architecture-blueprint.md), [Development Workflow](development-workflow.md), and [ADR 0001](decisions/0001-rust-owned-filesystem-boundary.md).
+- Finishing work: read the [PR / Agent Checklist](handbook/pr-checklist.md).

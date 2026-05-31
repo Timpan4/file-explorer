@@ -1,6 +1,6 @@
 # PR / Agent Checklist
 
-Run through this before opening a PR or marking an agent task done.
+Run this before opening a PR or marking an agent task done.
 
 ## Verification
 
@@ -19,18 +19,18 @@ Run through this before opening a PR or marking an agent task done.
 - [ ] Rust code is in the correct crate or host module.
 - [ ] Windows-specific code stayed in `crates/platform-windows` or behind `#[cfg(windows)]`.
 
-## UX and Performance
+## UX And Performance
 
 - [ ] Large lists remain virtualized.
-- [ ] Same-path refresh does not clear stable content.
-- [ ] Loading and status UI does not cause layout shift.
+- [ ] Same-path refresh keeps stable content visible.
+- [ ] Loading and status UI does not shift layout.
 - [ ] No expensive enrichment moved onto the navigation hot path.
 - [ ] Keyboard selection and focus rules still match the agent guide.
 
 ## Organization
 
 - [ ] New files follow [code-organization.md](code-organization.md).
-- [ ] Files crossing the soft caps have a split plan.
+- [ ] Files crossing soft caps have a split plan.
 - [ ] No hard-cap file grew without being split.
 - [ ] Superseded files were deleted.
 - [ ] No duplicate component, store, wrapper, or helper was added.

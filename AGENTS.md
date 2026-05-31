@@ -2,7 +2,7 @@
 
 This repository is a Windows-first desktop file explorer built with Tauri 2, SvelteKit, TypeScript, Bun, Rust, and Windows shell integration.
 
-Before making implementation changes, skim the [docs index](docs/README.md). The minimum reading set is:
+Before implementation changes, skim the [docs index](docs/README.md). Minimum reading:
 
 - `docs/product-vision.md`
 - `docs/architecture-blueprint.md`
@@ -22,30 +22,32 @@ Before making implementation changes, skim the [docs index](docs/README.md). The
 - Preserve restart-safe and cancellation-aware navigation semantics: stale jobs must not overwrite the current view.
 - Do not auto-focus the first row on load or reload.
 
-## Preferred Architecture
+## Architecture
 
 Rust owns explorer behavior. Svelte renders the shell.
 
-- `crates/core`: IPC types, directory contracts, job scheduling, snapshot caching, cancellation, pure explorer logic.
+- `crates/core`: IPC types, directory contracts, job scheduling, snapshot caching, cancellation, and pure explorer logic.
 - `crates/platform-windows`: Windows-only filesystem integration, icon hydration, shell APIs, and future native context menu hooks.
-- `src-tauri`: Tauri host, commands, event emission, application wiring.
+- `src-tauri`: Tauri host, commands, event emission, and application wiring.
 - `src/`: SvelteKit UI shell, typed Tauri wrappers, stores, and components. No direct filesystem behavior.
 
-Frontend code should call typed wrappers under `src/lib/tauri/`. Tauri commands should expose serde-friendly contracts from Rust crates or host modules. New IPC contracts need matching Rust and TypeScript types.
+Frontend code calls typed wrappers under `src/lib/tauri/`. Tauri commands expose serde-friendly contracts from Rust crates or host modules. New IPC contracts need matching Rust and TypeScript types.
 
-## File Organization
+## Organization
 
-The engineering handbook at [docs/handbook/](docs/handbook/) is the source of truth for code organization, file size, and hygiene. Skim its [README](docs/handbook/README.md) before making structural changes.
+The handbook at [docs/handbook/](docs/handbook/) owns code organization, file size, hygiene, and completion rules.
 
-Quick rules:
+Quick placement rules:
 
-- Feature-specific Svelte UI goes under `src/lib/components/<area>/` and related stores under `src/lib/stores/`.
+- Feature-specific Svelte UI goes under `src/lib/components/<area>/`.
+- Related stores go under `src/lib/stores/`.
 - Generic UI primitives stay under `src/lib/components/ui/`.
 - Typed frontend command wrappers stay under `src/lib/tauri/`.
 - Shared frontend types stay under `src/lib/types/`.
 - Rust explorer contracts and scheduling stay in `crates/core`.
 - Windows shell and filesystem code stays in `crates/platform-windows`.
-- Tauri command handlers stay under `src-tauri/src/commands/`; orchestration that is not a command handler belongs in a domain module such as `src-tauri/src/explorer/`.
+- Tauri command handlers stay under `src-tauri/src/commands/`.
+- Host orchestration that is not a command handler belongs in a domain module such as `src-tauri/src/explorer/`.
 - A new top-level source directory needs a one-line entry in [docs/handbook/code-organization.md](docs/handbook/code-organization.md).
 
 Run through [docs/handbook/pr-checklist.md](docs/handbook/pr-checklist.md) before claiming implementation work complete.
@@ -54,13 +56,13 @@ Run through [docs/handbook/pr-checklist.md](docs/handbook/pr-checklist.md) befor
 
 - Prefer existing patterns over invention.
 - Keep changes scoped and reviewable.
-- Add abstractions only when they remove real duplication or protect a boundary already documented here.
+- Add abstractions only when they remove duplication or protect a documented boundary.
 - Use Bun for frontend package management and scripts.
 - Commit `bun.lock` when frontend dependencies change.
-- Do not introduce dependencies without verifying the current stable version from an authoritative source and confirming they fit the project.
+- Do not introduce dependencies without verifying the current stable version from an authoritative source.
 - Do not add duplicate router, state, virtual list, command-wrapper, styling, or filesystem libraries without an ADR.
 - Add tests or checks where risk justifies them.
-- Use clear type names that match the docs unless there is a good reason to change them.
+- Use type names that match the docs unless there is a good reason to diverge.
 - Add comments only for non-obvious architecture decisions.
 - Add TODOs for future features without implementing them early.
 
@@ -83,26 +85,26 @@ Rust:
 
 General:
 
-- UI never blocks on filesystem calls; all I/O goes through Rust via IPC.
+- UI never blocks on filesystem calls.
 - All file operations initiated by UI emit through Rust commands.
 - Same-path refresh stages incoming items and swaps atomically on completion; do not clear the list.
 - Fast operations still need visible confirmation without flicker.
 
-## Product UX Rules
+## UX Rules
 
-Theme and visual style:
+Theme and style:
 
 - Windows-first daily-driver shell, not a generic web app.
 - Match system light/dark theme automatically by default.
-- Visual style should sit closer to Explorer and Files than to dashboard UIs.
+- Stay closer to Explorer and Files than dashboard UIs.
 - Keep layouts compact, scan-friendly, and quiet.
-- Do not use decorative cards, loud gradients, heavy blur, or web landing-page patterns in the working shell.
+- Avoid decorative cards, loud gradients, heavy blur, and web landing-page patterns in the working shell.
 
 Refresh and loading:
 
 - Same-path refresh keeps the current list visible until the replacement snapshot completes.
 - Suppress transient loading UI with debounce.
-- Use subtle progress indication and skeletons over emptying stable content.
+- Prefer subtle progress indication and skeletons over emptying stable content.
 - Loading text belongs in stable header/footer slots and must avoid layout shifts.
 
 Interaction:
@@ -124,7 +126,7 @@ Feedback:
 
 - Reuse stable button slots instead of adding/removing controls during short-lived states.
 - Prefer subtle, native-feeling motion over flashy transitions.
-- Errors should explain the failed filesystem action without exposing irrelevant internal details.
+- Errors should explain the failed filesystem action without exposing irrelevant internals.
 
 ## Performance Rules
 
@@ -135,7 +137,7 @@ Feedback:
 - Sorting and filtering for real directories stay Rust-owned.
 - Expensive enrichments are scheduled after the hot path and can be canceled.
 
-## Tauri Command Contracts
+## Tauri Contracts
 
 - Every frontend filesystem operation goes through a typed wrapper in `src/lib/tauri/`.
 - Every new Tauri command needs a Rust serde model, a TypeScript type, and a typed frontend wrapper.
@@ -143,7 +145,7 @@ Feedback:
 - Do not add broad command payloads that expose arbitrary filesystem contents beyond the requested user action.
 - Do not add shell execution or process-spawning command surfaces without an ADR.
 
-## Security-Sensitive Changes
+## ADR Triggers
 
 Write an ADR before changing:
 
@@ -167,7 +169,7 @@ Write an ADR before changing:
 - Full local verification should pass `bun run check` before hand-off when practical.
 - Tauri integration changes should be smoke tested with `bun run tauri dev` when practical.
 - If a check cannot run, state the exact blocker and what remains unverified.
-- When completing roadmap work, update the corresponding item in [ROADMAP.md](ROADMAP.md) or [TODOS.md](TODOS.md).
+- When completing roadmap work, update [ROADMAP.md](ROADMAP.md) or [TODOS.md](TODOS.md).
 
 ## Git Workflow
 
@@ -192,7 +194,7 @@ Outside GitButler mode, normal non-destructive git rules apply.
 Naming and commit rules:
 
 - Branch names use `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, `chore/`, or `perf/` plus a concrete 2-6 word kebab-case slug.
-- Avoid vague branch names such as `tmp`, `misc`, `updates`, `stuff`, or ticket-only names.
+- Avoid vague names such as `tmp`, `misc`, `updates`, `stuff`, or ticket-only names.
 - Commit subjects should state one concrete outcome.
 - Add a short commit body only when the why is not obvious.
 - Do not add AI or coauthor attribution unless requested.

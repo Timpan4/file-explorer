@@ -6,9 +6,7 @@ ADRs capture decisions that should not change accidentally during normal feature
 
 - [0001: Rust-Owned Filesystem Boundary](0001-rust-owned-filesystem-boundary.md)
 
-## When to add an ADR
-
-Add an ADR before changing:
+## Add An ADR Before Changing
 
 - the frontend/Rust filesystem boundary
 - Tauri capabilities or plugin permissions

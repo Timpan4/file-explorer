@@ -1,8 +1,8 @@
 # Roadmap
 
-## Product Goal
+## Goal
 
-Build a Windows-first file explorer that feels faster than Files by keeping the hot path in Rust and using Tauri/Svelte as a thin desktop shell.
+Build a Windows-first file explorer that feels faster than Files by keeping the navigation hot path in Rust and using Tauri/Svelte as a thin desktop shell.
 
 ## Reading Context
 
@@ -11,12 +11,12 @@ Build a Windows-first file explorer that feels faster than Files by keeping the 
 - [Design Brief](DESIGN.md): visual and interaction authority.
 - [Development Workflow](docs/development-workflow.md): verification standard.
 
-## Technical Strategy
+## Strategy
 
 - Rust owns directory enumeration, sorting, filtering, search, file operations, archive handling, preview orchestration, caching, and job cancellation.
 - Tauri transports typed intents and incremental state updates.
 - Svelte renders panes, tabs, lists, path controls, menus, dialogs, and settings without owning filesystem logic.
-- Windows-specific integrations live behind platform modules so future macOS/Linux support can be added later without rewriting the core.
+- Windows integrations live behind platform modules so future macOS/Linux support can share the core contracts.
 - Expensive enrichments stay off the navigation hot path and must be cancelable when they can race navigation.
 
 ## Performance Budgets
@@ -25,7 +25,7 @@ Build a Windows-first file explorer that feels faster than Files by keeping the 
 - Warm folder switch: first visible rows in under 100 ms.
 - Large folder navigation: incremental rows immediately, no UI freeze.
 - Sort on cached 10k-item directory: under 120 ms.
-- Scroll performance in details view: stable 60 fps in virtualized lists.
+- Details-view scrolling: stable 60 fps in virtualized lists.
 - Cancellation: stale navigation jobs never overwrite current view state.
 
 ## Phase 0: Foundations
@@ -33,10 +33,10 @@ Build a Windows-first file explorer that feels faster than Files by keeping the 
 Goal: establish the repo and architecture boundary for a Rust-owned explorer.
 
 - [x] Define Rust crate boundaries.
-- [x] Define IPC model around request ids, job ids, and streamed deltas for the first explorer slice.
+- [x] Define IPC around request ids, job ids, and streamed deltas for the first explorer slice.
 - [ ] Build benchmark harness for startup, navigation, search, sort, and file operations.
-- [x] Lock down renderer-only frontend rules for the current Tauri/Svelte shell.
-- [x] Add Kubecove-style docs, handbook, and ADR structure.
+- [x] Lock down renderer-only frontend rules for the Tauri/Svelte shell.
+- [x] Add docs, handbook, and ADR structure.
 
 ## Phase 1: Fast Navigation Core
 
@@ -54,9 +54,10 @@ Goal: make local directory navigation fast, incremental, and stable.
 Goal: become useful as a daily-driver shell for common file work.
 
 - [x] Add tabs.
+- [x] Add rename, delete-to-recycle-bin, and create-folder actions.
 - [ ] Add dual-pane state model.
 - [ ] Add omnibar and command palette shell.
-- [ ] Add copy, move, rename, delete, recycle bin, and conflict UX.
+- [ ] Add queued copy/move operations with progress and conflict handling.
 - [x] Add developer settings for artificial navigation delay and UI testing toggles.
 - [x] Add developer timing traces for navigation/render visibility.
 - [ ] Add persistent metrics collection for startup, navigation, sort, search, and scroll budgets.
@@ -82,7 +83,7 @@ Goal: add optional external context behind explicit boundaries.
 - [ ] Add cloud drive providers without polluting core navigation latency.
 - [ ] Add FTP/SFTP.
 - [ ] Define third-party integration boundaries and plugin safety rules.
-- [ ] Add ADRs for any integration that touches credentials, shell execution, or the navigation hot path.
+- [ ] Add ADRs for integrations that touch credentials, shell execution, or the navigation hot path.
 
 ## Phase 5: Future Portability
 
@@ -95,7 +96,7 @@ Goal: preserve Windows excellence while making future platform backends possible
 
 ## Cross-Cutting Tracks
 
-### Safety and File Operations
+Safety and file operations:
 
 - [x] Keep frontend filesystem behavior behind Tauri commands.
 - [x] Keep first navigation slice Rust-owned.
@@ -103,7 +104,7 @@ Goal: preserve Windows excellence while making future platform backends possible
 - [ ] Prefer recycle-bin behavior where Windows supports it.
 - [ ] Add ADR before exposing broad shell execution or plugin execution.
 
-### UX and Shell Fidelity
+UX and shell fidelity:
 
 - [x] Match system light/dark theme by default.
 - [x] Keep the main list virtualized.
@@ -112,12 +113,12 @@ Goal: preserve Windows excellence while making future platform backends possible
 - [ ] Add drag/drop affordances.
 - [ ] Add dual-pane workflows.
 
-### Agent and Maintainer Discipline
+Agent and maintainer discipline:
 
 - [x] Add docs index and agent guide.
 - [x] Add engineering handbook.
 - [x] Add architecture decision records directory.
-- [ ] Add checked-in pre-commit or validation hook if the repo starts needing enforced size/secrets checks.
+- [ ] Add checked-in pre-commit or validation hook if size/secrets checks need enforcement.
 - [ ] Keep roadmap/TODO items updated as milestones land.
 
 ## Non-Negotiables
