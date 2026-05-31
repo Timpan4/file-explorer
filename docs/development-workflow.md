@@ -28,6 +28,8 @@ bun run build
 bun run typecheck && bun test && bun run rust:test && bun run rust:check
 ```
 
+`bun run rust:test` and `bun run rust:check` run the full Rust workspace on Windows. On non-Windows hosts they run `file-explorer-core` only, because `crates/platform-windows` and the Tauri host bind to Windows APIs. Run the Windows scripts on a Windows machine before claiming platform or Tauri behavior complete.
+
 To slow navigation for UI testing, set `VITE_EXPLORER_NAV_DELAY_MS` before starting dev.
 
 ```powershell
