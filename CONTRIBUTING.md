@@ -33,6 +33,7 @@ bun run build
 ```
 
 `bun run check` runs frontend typecheck, Bun tests, Rust tests, and Rust check.
+`bun run rust:test` and `bun run rust:check` cover the full Rust workspace on Windows; on non-Windows hosts they run the portable core crate and leave Windows platform verification to a Windows machine.
 
 ## Rules
 
