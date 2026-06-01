@@ -10,6 +10,7 @@ Run this before opening a PR or marking an agent task done.
 - [ ] Backend touched: `bun run rust:check` passes.
 - [ ] Backend behavior touched: relevant `bun run rust:test` or targeted tests pass.
 - [ ] Full local bundle passes with `bun run check` before hand-off when practical.
+- [ ] Pull request CI is green on Windows and Ubuntu when a PR is opened.
 - [ ] The app starts and the affected flow works if Tauri integration changed.
 
 ## Architecture
