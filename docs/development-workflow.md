@@ -37,6 +37,20 @@ $env:VITE_EXPLORER_NAV_DELAY_MS = "500"
 bun run tauri dev
 ```
 
+## Pull Request CI
+
+Pull requests to `main` run the testing standard in GitHub Actions on Windows and Ubuntu:
+
+```sh
+bun run typecheck
+bun run test
+bun run rust:test
+bun run rust:check
+bun run build
+```
+
+CI runs explicit commands so failures identify the broken layer. Keep `bun run check` aligned with the local bundle above.
+
 ## Dependency Policy
 
 Use the latest stable version by default. Before adding, installing, upgrading, or recommending dependencies, APIs, SDKs, CLIs, frameworks, runtimes, templates, or external services, verify the current stable version from an authoritative source.
@@ -69,7 +83,7 @@ Run the checks that match the change:
 
 - docs-only change: inspect links and headings; no app build is usually required
 - frontend type or component change: `bun run typecheck`
-- frontend behavior change: relevant `bun test` coverage
+- frontend behavior change: relevant `bun run test` coverage
 - production build, routing, or static output change: `bun run build`
 - Rust backend change: `bun run rust:check`
 - Rust behavior change: `bun run rust:test` or targeted crate tests
