@@ -39,7 +39,7 @@ bun run tauri dev
 
 ## Pull Request CI
 
-Pull requests to `main` run the testing standard in GitHub Actions on Windows and Ubuntu:
+The existing `.github/workflows/ci.yml` workflow runs the testing standard for pull requests to `main` on Windows and Ubuntu:
 
 ```sh
 bun run typecheck
