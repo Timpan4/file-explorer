@@ -20,11 +20,7 @@ if (process.platform !== "win32") {
 
 const cargo = Bun.spawn(["cargo", ...commandArgs], {
   stdout: "inherit",
-  stderr: "inherit",
-  env: {
-    ...Bun.env,
-    CARGO_INCREMENTAL: "0"
-  }
+  stderr: "inherit"
 });
 
 process.exit(await cargo.exited);
