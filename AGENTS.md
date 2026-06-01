@@ -167,6 +167,7 @@ Write an ADR before changing:
 - Rust backend changes should pass `bun run rust:check`.
 - Rust behavior changes should run `bun run rust:test` or a targeted crate test.
 - Full local verification should pass `bun run check` before hand-off when practical.
+- Pull requests to `main` should pass `.github/workflows/ci.yml` on Windows and Ubuntu: `bun run typecheck`, `bun run test`, `bun run rust:test`, `bun run rust:check`, and `bun run build`.
 - Tauri integration changes should be smoke tested with `bun run tauri dev` when practical.
 - If a check cannot run, state the exact blocker and what remains unverified.
 - When completing roadmap work, update [ROADMAP.md](ROADMAP.md) or [TODOS.md](TODOS.md).
