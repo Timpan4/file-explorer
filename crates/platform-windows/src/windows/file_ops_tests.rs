@@ -128,6 +128,42 @@ fn conflict_replace_overwrites_existing_file() {
 }
 
 #[test]
+fn copy_to_same_path_with_replace_skips_without_deleting_source() {
+    let temp_dir = temp_case("replace-self-copy-test");
+    let source_dir = temp_dir.join("source");
+    fs::create_dir_all(&source_dir).expect("source dir");
+    fs::write(source_dir.join("report.txt"), "source").expect("source file");
+    let mut progress = Vec::new();
+
+    let request = StartFileOperationRequest {
+        operation_id: "operation-1".to_string(),
+        kind: FileOperationKind::Copy,
+        source_paths: vec![source_dir.join("report.txt").to_string_lossy().to_string()],
+        destination_directory: source_dir.to_string_lossy().to_string(),
+        default_conflict_resolution: Some(FileConflictResolution::Replace),
+    };
+
+    let execution =
+        execute_file_operation(&request, || false, |_| None, |event| progress.push(event))
+            .expect("operation should run");
+    let report = match execution {
+        FileOperationExecution::Completed(report) => report,
+        FileOperationExecution::Cancelled(_) => panic!("operation should not cancel"),
+    };
+
+    assert!(report.completed.is_empty());
+    assert_eq!(report.skipped.len(), 1);
+    assert!(report.failed.is_empty());
+    assert_eq!(progress.len(), 1);
+    assert_eq!(
+        fs::read_to_string(source_dir.join("report.txt")).expect("source contents"),
+        "source"
+    );
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
 fn ask_conflict_uses_resolver_before_copying() {
     let temp_dir = temp_case("ask-conflict-test");
     let source_dir = temp_dir.join("source");

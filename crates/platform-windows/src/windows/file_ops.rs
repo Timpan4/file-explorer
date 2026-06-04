@@ -178,6 +178,22 @@ where
                 }
                 FileConflictResolution::Replace => {
                     if let Some(destination_canonical_path) = destination_canonical_path {
+                        if request.kind == file_explorer_core::file_operations::FileOperationKind::Copy
+                            && destination_canonical_path
+                                == prepared_source.source_canonical_path
+                        {
+                            accumulator
+                                .skipped
+                                .push(operation_item(&prepared_source, &destination_path));
+                            report_progress(progress_event(
+                                request,
+                                processed_items,
+                                total_items,
+                                Some(prepared_source.source_display_path.clone()),
+                            ));
+                            continue;
+                        }
+
                         accumulator
                             .affected_descendant_paths
                             .insert(destination_canonical_path);
