@@ -2,9 +2,11 @@
   import ActionGlyph from "$lib/components/explorer/ActionGlyph.svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import { getActionsForSurface, runExplorerAction } from "$lib/stores/explorerActions";
+  import { explorerFileOperations } from "$lib/stores/explorerFileOperations";
   import { explorerSession } from "$lib/stores/explorerSession";
 
   let { currentPath, selectedIds, items } = $derived($explorerSession);
+  let { clipboard } = $derived($explorerFileOperations);
   const actionContext = $derived.by(() => {
     const selectedIdSet = new Set(selectedIds);
     const selectedItems = items.filter((item) => selectedIdSet.has(item.id));
@@ -14,7 +16,7 @@
       selectedItems,
       selectedCount: selectedItems.length,
       hasSelection: selectedItems.length > 0,
-      clipboardAvailable: false
+      clipboardAvailable: Boolean(clipboard && clipboard.items.length > 0)
     };
   });
   const actions = $derived(getActionsForSurface("command-bar", actionContext));

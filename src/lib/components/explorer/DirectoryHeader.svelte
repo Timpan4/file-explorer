@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { explorerUi, getGridTemplate } from "$lib/stores/explorerUi";
+  import { explorerUi, getGridTemplate, getTableWidth } from "$lib/stores/explorerUi";
   import { explorerSession } from "$lib/stores/explorerSession";
   import type { SortField } from "$lib/types/explorer";
 
@@ -14,6 +14,7 @@
   ];
 
   const gridTemplate = $derived(getGridTemplate(columnWidths));
+  const tableWidth = $derived(getTableWidth(columnWidths, 10) + 34);
 
   function ariaSort(field: SortField) {
     if (sort.field !== field) {
@@ -43,7 +44,7 @@
 </script>
 
 <div class="header-bar">
-  <div class="header-columns" style={`grid-template-columns:${gridTemplate};`}>
+  <div class="header-columns" style={`grid-template-columns:${gridTemplate};--table-width:${tableWidth}px;`}>
     {#each columns as column}
       <div class:align-right={column.align === "right"} class="column" role="columnheader" aria-sort={ariaSort(column.field)}>
         <button
@@ -81,8 +82,10 @@
   .header-columns {
     display: grid;
     gap: 10px;
-    width: fit-content;
-    padding: 6px 12px;
+    width: 100%;
+    min-width: var(--table-width);
+    box-sizing: border-box;
+    padding: 6px 13px 6px 21px;
     color: var(--text-muted);
     font-size: 0.75rem;
     letter-spacing: 0.01em;

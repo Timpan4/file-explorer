@@ -50,10 +50,9 @@
     width: min(320px, calc(100vw - 32px));
     padding: 12px 12px 12px 14px;
     border: 1px solid color-mix(in srgb, var(--panel-border) 92%, transparent);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--surface-raised) 96%, transparent);
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
-    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    background: var(--surface-raised);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
   }
 
   .toast.info {
@@ -110,7 +109,7 @@
   .action {
     min-height: 26px;
     padding: 0 8px;
-    border-radius: 8px;
+    border-radius: 4px;
     font-size: 0.78rem;
     color: var(--pill-text);
   }
@@ -121,7 +120,7 @@
     justify-content: center;
     width: 24px;
     height: 24px;
-    border-radius: 8px;
+    border-radius: 4px;
     color: var(--text-muted);
   }
 

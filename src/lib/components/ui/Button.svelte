@@ -82,7 +82,7 @@
     border: 1px solid transparent;
     border-radius: var(--button-radius);
     background: transparent;
-    color: var(--text-primary);
+    color: var(--text-primary, #1f2937);
     font: inherit;
     font-size: 0.84rem;
     line-height: 1;
@@ -142,7 +142,7 @@
   }
 
   .button.danger {
-    color: color-mix(in srgb, #cf5a50 82%, var(--text-primary));
+    color: color-mix(in srgb, #cf5a50 82%, var(--text-primary, #1f2937));
   }
 
   .button.active {
@@ -154,7 +154,7 @@
   .button:hover:enabled {
     border-color: color-mix(in srgb, var(--button-hover-border) 72%, transparent);
     background: color-mix(in srgb, var(--button-hover-bg) 72%, transparent);
-    color: var(--text-primary);
+    color: var(--text-primary, #1f2937);
   }
 
   .button.subtle:hover:enabled,
@@ -170,7 +170,7 @@
   .button.danger:hover:enabled {
     border-color: color-mix(in srgb, var(--warn-hover-border) 76%, transparent);
     background: color-mix(in srgb, var(--warn-hover-bg) 72%, transparent);
-    color: color-mix(in srgb, #cf5a50 92%, var(--text-strong));
+    color: color-mix(in srgb, #cf5a50 92%, var(--text-strong, #111827));
   }
 
   .button:active:enabled {

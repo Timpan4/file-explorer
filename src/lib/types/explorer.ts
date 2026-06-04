@@ -2,6 +2,8 @@ export type JobId = string;
 export type SnapshotToken = string;
 export type ExplorerTabId = string;
 export type ExplorerWindowId = string;
+export type FileOperationId = string;
+export type FileConflictId = string;
 export type ExplorerOperationType = "cold_navigation" | "warm_navigation" | "search" | "sort" | "refresh";
 
 export type SortField = "name" | "type" | "modifiedAt" | "size";
@@ -77,6 +79,113 @@ export type DeleteToRecycleBinResponse = {
   failed: DeleteToRecycleBinFailure[];
   affectedParentPaths: string[];
 };
+
+export type FileOperationKind = "copy" | "move";
+export type FileConflictResolution = "ask" | "skip" | "replace" | "keepBoth";
+
+export type StartFileOperationRequest = {
+  operationId: FileOperationId;
+  kind: FileOperationKind;
+  sourcePaths: string[];
+  destinationDirectory: string;
+  defaultConflictResolution?: FileConflictResolution;
+};
+
+export type CancelFileOperationRequest = {
+  operationId: FileOperationId;
+};
+
+export type ResolveFileOperationConflictRequest = {
+  operationId: FileOperationId;
+  conflictId: FileConflictId;
+  resolution: FileConflictResolution;
+};
+
+export type FileOperationItem = {
+  sourcePath: string;
+  destinationPath: string;
+  name: string;
+  kind: DirectoryItemKind;
+};
+
+export type FileOperationFailure = {
+  sourcePath: string;
+  destinationPath: string | null;
+  name: string;
+  kind: DirectoryItemKind | null;
+  code: string;
+  message: string;
+};
+
+export type FileOperationEvent =
+  | {
+      event: "queued";
+      data: {
+        operationId: FileOperationId;
+        kind: FileOperationKind;
+        queuePosition: number;
+      };
+    }
+  | {
+      event: "started";
+      data: {
+        operationId: FileOperationId;
+        kind: FileOperationKind;
+        totalItems: number;
+      };
+    }
+  | {
+      event: "progress";
+      data: {
+        operationId: FileOperationId;
+        kind: FileOperationKind;
+        processedItems: number;
+        totalItems: number;
+        currentPath: string | null;
+      };
+    }
+  | {
+      event: "conflict";
+      data: {
+        operationId: FileOperationId;
+        conflictId: FileConflictId;
+        sourcePath: string;
+        destinationPath: string;
+        name: string;
+        kind: DirectoryItemKind;
+      };
+    }
+  | {
+      event: "completed";
+      data: {
+        operationId: FileOperationId;
+        kind: FileOperationKind;
+        completed: FileOperationItem[];
+        skipped: FileOperationItem[];
+        failed: FileOperationFailure[];
+        affectedParentPaths: string[];
+      };
+    }
+  | {
+      event: "cancelled";
+      data: {
+        operationId: FileOperationId;
+        kind: FileOperationKind;
+        completed: FileOperationItem[];
+        skipped: FileOperationItem[];
+        failed: FileOperationFailure[];
+        affectedParentPaths: string[];
+      };
+    }
+  | {
+      event: "failed";
+      data: {
+        operationId: FileOperationId;
+        kind: FileOperationKind;
+        code: string;
+        message: string;
+      };
+    };
 
 export type SidebarRoot = {
   id: string;
@@ -253,6 +362,14 @@ export function createJobId() {
   }
 
   return `job-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+export function createFileOperationId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `operation-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 export function createExplorerTabId() {
