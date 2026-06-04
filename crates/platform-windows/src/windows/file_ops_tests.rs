@@ -350,6 +350,13 @@ fn recursive_directory_copy_checks_cancellation_between_entries() {
 
     assert!(report.completed.is_empty());
     assert!(report.failed.is_empty());
+    assert_eq!(
+        report.affected_parent_paths,
+        vec![
+            super::super::fs::canonicalize_folder_path(destination_dir.to_string_lossy().as_ref())
+                .expect("canonical destination")
+        ]
+    );
     assert!(destination_dir.join("source").exists());
     assert!(!destination_dir.join("source").join("report.txt").exists());
 

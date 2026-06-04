@@ -121,7 +121,7 @@ function createExplorerFileOperationsStore() {
           kind: clipboard.kind,
           sourcePaths: clipboard.items.map((item) => item.path),
           destinationDirectory,
-          defaultConflictResolution: "keepBoth"
+          defaultConflictResolution: "ask"
         },
         handleFileOperationEvent
       );
@@ -228,6 +228,7 @@ function createExplorerFileOperationsStore() {
           status: "failed",
           message: event.data.message
         });
+        clearPendingConflict(event.data.operationId);
         removeChannel(event.data.operationId);
         notify.error(event.data.message);
         break;
@@ -250,6 +251,7 @@ function createExplorerFileOperationsStore() {
     affectedParentPaths: string[]
   ) {
     removeChannel(operationId);
+    clearPendingConflict(operationId);
 
     if (kind === "move" && failedCount === 0) {
       store.update((state) => ({ ...state, clipboard: null }));
@@ -276,6 +278,16 @@ function createExplorerFileOperationsStore() {
     cancel,
     resolveConflict
   };
+
+  function clearPendingConflict(operationId: FileOperationId) {
+    store.update((state) => {
+      if (state.pendingConflict?.operationId !== operationId) {
+        return state;
+      }
+
+      return { ...state, pendingConflict: null };
+    });
+  }
 }
 
 function removeChannel(operationId: FileOperationId) {

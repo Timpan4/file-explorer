@@ -258,6 +258,19 @@ where
                     .push(operation_item(&prepared_source, &destination_path));
             }
             Err(error) if error.code == "file_operation_cancelled" => {
+                accumulator
+                    .affected_parent_paths
+                    .insert(destination_parent_canonical_path.clone());
+                if prepared_source.kind == DirectoryItemKind::Directory {
+                    if let Ok(destination_canonical_path) = super::fs::canonicalize_existing_path(
+                        destination_path.to_string_lossy().as_ref(),
+                    ) {
+                        accumulator
+                            .affected_descendant_paths
+                            .insert(destination_canonical_path);
+                    }
+                }
+
                 return Ok(FileOperationExecution::Cancelled(accumulator.into_report()));
             }
             Err(error) => {
