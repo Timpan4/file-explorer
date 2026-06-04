@@ -89,6 +89,32 @@ where
         let mut destination_path = destination_directory.join(&prepared_source.name);
         let destination_existed = destination_path.exists();
 
+        if prepared_source.kind == DirectoryItemKind::Directory
+            && path_matches_or_is_descendant(
+                &destination_parent_canonical_path,
+                &prepared_source.source_canonical_path,
+            )
+        {
+            accumulator.failed.push(FileOperationFailure {
+                source_path: prepared_source.source_display_path.clone(),
+                destination_path: Some(destination_path.to_string_lossy().to_string()),
+                name: prepared_source.name.clone(),
+                kind: Some(prepared_source.kind.clone()),
+                code: "file_operation_destination_inside_source".to_string(),
+                message: format!(
+                    "Cannot copy or move '{}' into itself or one of its subfolders.",
+                    prepared_source.source_display_path
+                ),
+            });
+            report_progress(progress_event(
+                request,
+                processed_items,
+                total_items,
+                Some(prepared_source.source_display_path.clone()),
+            ));
+            continue;
+        }
+
         if destination_existed {
             let destination_canonical_path =
                 super::fs::canonicalize_existing_path(destination_path.to_string_lossy().as_ref())
@@ -166,10 +192,18 @@ where
 
         let result = match request.kind {
             file_explorer_core::file_operations::FileOperationKind::Copy => {
-                copy_path(&prepared_source.source_path, &destination_path)
+                copy_path(
+                    &prepared_source.source_path,
+                    &destination_path,
+                    &mut should_cancel,
+                )
             }
             file_explorer_core::file_operations::FileOperationKind::Move => {
-                move_path(&prepared_source.source_path, &destination_path)
+                move_path(
+                    &prepared_source.source_path,
+                    &destination_path,
+                    &mut should_cancel,
+                )
             }
         };
 
@@ -206,6 +240,9 @@ where
                 accumulator
                     .completed
                     .push(operation_item(&prepared_source, &destination_path));
+            }
+            Err(error) if error.code == "file_operation_cancelled" => {
+                return Ok(FileOperationExecution::Cancelled(accumulator.into_report()));
             }
             Err(error) => {
                 accumulator.failed.push(FileOperationFailure {
@@ -284,7 +321,16 @@ fn prepare_source(source_path: &str) -> Result<PreparedSource, ExplorerError> {
     })
 }
 
-fn copy_path(source_path: &Path, destination_path: &Path) -> Result<(), ExplorerError> {
+fn copy_path<C>(
+    source_path: &Path,
+    destination_path: &Path,
+    should_cancel: &mut C,
+) -> Result<(), ExplorerError>
+where
+    C: FnMut() -> bool,
+{
+    ensure_not_cancelled(should_cancel)?;
+
     let metadata = fs::symlink_metadata(source_path).map_err(|error| {
         ExplorerError::new(
             "copy_source_metadata_failed",
@@ -308,6 +354,8 @@ fn copy_path(source_path: &Path, destination_path: &Path) -> Result<(), Explorer
         })?;
 
         for entry in entries {
+            ensure_not_cancelled(should_cancel)?;
+
             let entry = entry.map_err(|error| {
                 ExplorerError::new(
                     "copy_directory_entry_failed",
@@ -317,7 +365,11 @@ fn copy_path(source_path: &Path, destination_path: &Path) -> Result<(), Explorer
                     ),
                 )
             })?;
-            copy_path(&entry.path(), &destination_path.join(entry.file_name()))?;
+            copy_path(
+                &entry.path(),
+                &destination_path.join(entry.file_name()),
+                should_cancel,
+            )?;
         }
 
         return Ok(());
@@ -337,11 +389,20 @@ fn copy_path(source_path: &Path, destination_path: &Path) -> Result<(), Explorer
     Ok(())
 }
 
-fn move_path(source_path: &Path, destination_path: &Path) -> Result<(), ExplorerError> {
+fn move_path<C>(
+    source_path: &Path,
+    destination_path: &Path,
+    should_cancel: &mut C,
+) -> Result<(), ExplorerError>
+where
+    C: FnMut() -> bool,
+{
+    ensure_not_cancelled(should_cancel)?;
+
     match fs::rename(source_path, destination_path) {
         Ok(()) => Ok(()),
         Err(rename_error) => {
-            copy_path(source_path, destination_path).map_err(|copy_error| {
+            copy_path(source_path, destination_path, should_cancel).map_err(|copy_error| {
                 ExplorerError::new(
                     "move_failed",
                     format!(
@@ -369,6 +430,28 @@ fn move_path(source_path: &Path, destination_path: &Path) -> Result<(), Explorer
             Ok(())
         }
     }
+}
+
+fn ensure_not_cancelled<C>(should_cancel: &mut C) -> Result<(), ExplorerError>
+where
+    C: FnMut() -> bool,
+{
+    if should_cancel() {
+        return Err(ExplorerError::new(
+            "file_operation_cancelled",
+            "File operation was cancelled.",
+        ));
+    }
+
+    Ok(())
+}
+
+fn path_matches_or_is_descendant(path: &str, ancestor: &str) -> bool {
+    let normalized_path = path.trim_end_matches(['\\', '/']).to_ascii_lowercase();
+    let normalized_ancestor = ancestor.trim_end_matches(['\\', '/']).to_ascii_lowercase();
+    let ancestor_with_separator = format!("{normalized_ancestor}\\");
+
+    normalized_path == normalized_ancestor || normalized_path.starts_with(&ancestor_with_separator)
 }
 
 fn remove_existing_path(path: &Path) -> Result<(), ExplorerError> {

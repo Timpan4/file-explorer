@@ -243,3 +243,79 @@ fn cancellation_before_first_item_does_not_touch_files() {
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn copy_directory_into_own_descendant_reports_failure_without_copying() {
+    let temp_dir = temp_case("copy-into-descendant-test");
+    let source_dir = temp_dir.join("source");
+    let child_destination = source_dir.join("child");
+    fs::create_dir_all(&child_destination).expect("child destination dir");
+    fs::write(source_dir.join("report.txt"), "source").expect("source file");
+
+    let request = StartFileOperationRequest {
+        operation_id: "operation-1".to_string(),
+        kind: FileOperationKind::Copy,
+        source_paths: vec![source_dir.to_string_lossy().to_string()],
+        destination_directory: child_destination.to_string_lossy().to_string(),
+        default_conflict_resolution: Some(FileConflictResolution::KeepBoth),
+    };
+
+    let execution =
+        execute_file_operation(&request, || false, |_| None, |_| {}).expect("operation should run");
+    let report = match execution {
+        FileOperationExecution::Completed(report) => report,
+        FileOperationExecution::Cancelled(_) => panic!("operation should not cancel"),
+    };
+
+    assert!(report.completed.is_empty());
+    assert!(report.skipped.is_empty());
+    assert_eq!(report.failed.len(), 1);
+    assert_eq!(
+        report.failed[0].code,
+        "file_operation_destination_inside_source"
+    );
+    assert!(!child_destination.join("source").exists());
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn recursive_directory_copy_checks_cancellation_between_entries() {
+    let temp_dir = temp_case("recursive-cancel-test");
+    let source_dir = temp_dir.join("source");
+    let destination_dir = temp_dir.join("destination");
+    fs::create_dir_all(&source_dir).expect("source dir");
+    fs::create_dir_all(&destination_dir).expect("destination dir");
+    fs::write(source_dir.join("report.txt"), "source").expect("source file");
+    let mut cancel_checks = 0;
+
+    let request = StartFileOperationRequest {
+        operation_id: "operation-1".to_string(),
+        kind: FileOperationKind::Copy,
+        source_paths: vec![source_dir.to_string_lossy().to_string()],
+        destination_directory: destination_dir.to_string_lossy().to_string(),
+        default_conflict_resolution: Some(FileConflictResolution::KeepBoth),
+    };
+
+    let execution = execute_file_operation(
+        &request,
+        || {
+            cancel_checks += 1;
+            cancel_checks >= 3
+        },
+        |_| None,
+        |_| {},
+    )
+    .expect("operation should cancel cleanly");
+    let report = match execution {
+        FileOperationExecution::Completed(_) => panic!("operation should cancel"),
+        FileOperationExecution::Cancelled(report) => report,
+    };
+
+    assert!(report.completed.is_empty());
+    assert!(report.failed.is_empty());
+    assert!(destination_dir.join("source").exists());
+    assert!(!destination_dir.join("source").join("report.txt").exists());
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
