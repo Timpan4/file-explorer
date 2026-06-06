@@ -211,7 +211,13 @@ function createExplorerFileOperationsStore() {
           failedCount: event.data.failed.length,
           message: summarizeFileOperation(event.data.kind, event.data.completed.length, event.data.skipped.length, event.data.failed.length)
         });
-        handleTerminalOperation(event.data.operationId, event.data.kind, event.data.failed.length, event.data.affectedParentPaths);
+        handleTerminalOperation(
+          event.data.operationId,
+          event.data.kind,
+          "completed",
+          event.data.failed.length,
+          event.data.affectedParentPaths
+        );
         break;
       case "cancelled":
         updateOperation(event.data.operationId, {
@@ -221,7 +227,13 @@ function createExplorerFileOperationsStore() {
           failedCount: event.data.failed.length,
           message: "Operation cancelled"
         });
-        handleTerminalOperation(event.data.operationId, event.data.kind, event.data.failed.length, event.data.affectedParentPaths);
+        handleTerminalOperation(
+          event.data.operationId,
+          event.data.kind,
+          "cancelled",
+          event.data.failed.length,
+          event.data.affectedParentPaths
+        );
         break;
       case "failed":
         updateOperation(event.data.operationId, {
@@ -247,13 +259,14 @@ function createExplorerFileOperationsStore() {
   function handleTerminalOperation(
     operationId: FileOperationId,
     kind: FileOperationKind,
+    status: "completed" | "cancelled",
     failedCount: number,
     affectedParentPaths: string[]
   ) {
     removeChannel(operationId);
     clearPendingConflict(operationId);
 
-    if (kind === "move" && failedCount === 0) {
+    if (status === "completed" && kind === "move" && failedCount === 0) {
       store.update((state) => ({ ...state, clipboard: null }));
     }
 

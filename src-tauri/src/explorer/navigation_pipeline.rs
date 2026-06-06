@@ -51,9 +51,14 @@ impl NavigationPipeline {
             return;
         }
 
-        let resolved_snapshot = match self.resolve_snapshot(&request, include_hidden) {
+        let resolved_snapshot = match self.resolve_snapshot(&request, include_hidden, &job) {
             Ok(snapshot) => snapshot,
             Err(error) => {
+                if job.is_cancelled() {
+                    send_cancelled_event(&on_event, &request, &job);
+                    return;
+                }
+
                 let _ = on_event.send(ExplorerStreamEvent::Failed(FailedEvent {
                     job_id: request.job_id.clone(),
                     code: error.code,
@@ -64,10 +69,7 @@ impl NavigationPipeline {
         };
 
         if job.is_cancelled() {
-            let _ = on_event.send(ExplorerStreamEvent::Cancelled(CancelledEvent {
-                job_id: request.job_id.clone(),
-                reason: job.cancel_reason().unwrap_or(CancelReason::Explicit),
-            }));
+            send_cancelled_event(&on_event, &request, &job);
             return;
         }
 
@@ -93,10 +95,7 @@ impl NavigationPipeline {
         let mut first_chunk_send_ms = None;
         for chunk in entries[start_index..].chunks(chunk_size) {
             if job.is_cancelled() {
-                let _ = on_event.send(ExplorerStreamEvent::Cancelled(CancelledEvent {
-                    job_id: request.job_id.clone(),
-                    reason: job.cancel_reason().unwrap_or(CancelReason::Explicit),
-                }));
+                send_cancelled_event(&on_event, &request, &job);
                 return;
             }
 
@@ -144,9 +143,14 @@ impl NavigationPipeline {
         &self,
         request: &NavigationRequest,
         include_hidden: bool,
+        job: &JobHandle,
     ) -> Result<ResolvedDirectorySnapshot, ExplorerError> {
         let resolve_started_at = Instant::now();
+        fail_if_cancelled(job)?;
+
         let canonical_path = fs::canonicalize_folder_path(&request.path)?;
+        fail_if_cancelled(job)?;
+
         let cache_key = DirectoryCacheKey::new(&canonical_path, include_hidden);
         let force_refresh = request.force_refresh.unwrap_or(false);
 
@@ -163,8 +167,11 @@ impl NavigationPipeline {
         }
 
         let enumerate_started_at = Instant::now();
+        fail_if_cancelled(job)?;
         let items = Arc::new(fs::read_directory_snapshot(&canonical_path, include_hidden)?);
         let enumerate_fs_ms = enumerate_started_at.elapsed().as_millis();
+        fail_if_cancelled(job)?;
+
         self.snapshots.insert(cache_key, Arc::clone(&items));
 
         Ok(ResolvedDirectorySnapshot {
@@ -175,4 +182,26 @@ impl NavigationPipeline {
             snapshot_build_ms: Some(resolve_started_at.elapsed().as_millis()),
         })
     }
+}
+
+fn fail_if_cancelled(job: &JobHandle) -> Result<(), ExplorerError> {
+    if job.is_cancelled() {
+        return Err(ExplorerError::new(
+            "navigation_cancelled",
+            "Navigation was cancelled before the directory snapshot completed.",
+        ));
+    }
+
+    Ok(())
+}
+
+fn send_cancelled_event(
+    on_event: &Channel<ExplorerStreamEvent>,
+    request: &NavigationRequest,
+    job: &JobHandle,
+) {
+    let _ = on_event.send(ExplorerStreamEvent::Cancelled(CancelledEvent {
+        job_id: request.job_id.clone(),
+        reason: job.cancel_reason().unwrap_or(CancelReason::Explicit),
+    }));
 }

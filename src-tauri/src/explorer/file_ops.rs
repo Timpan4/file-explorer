@@ -9,7 +9,7 @@ use file_explorer_core::file_operations::{
 use file_explorer_platform_windows::windows::file_ops::{
     execute_file_operation, FileOperationExecution, FileOperationExecutionReport,
 };
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use tauri::ipc::Channel;
@@ -36,8 +36,14 @@ struct ActiveFileOperation {
 
 struct FileOperationControl {
     cancelled: AtomicBool,
-    conflict_resolutions: Mutex<HashMap<FileConflictId, FileConflictResolution>>,
+    conflicts: Mutex<FileOperationConflictState>,
     conflict_resolved: Condvar,
+}
+
+#[derive(Default)]
+struct FileOperationConflictState {
+    pending: HashSet<FileConflictId>,
+    resolutions: HashMap<FileConflictId, FileConflictResolution>,
 }
 
 impl FileOperationQueue {
@@ -153,8 +159,7 @@ impl FileOperationQueue {
             Arc::clone(&active.control)
         };
 
-        control.resolve(request.conflict_id, request.resolution);
-        Ok(())
+        control.resolve(request.conflict_id, request.resolution)
     }
 
     fn start_next(self: &Arc<Self>) {
@@ -213,6 +218,8 @@ impl FileOperationQueue {
             &request,
             || control.is_cancelled(),
             |conflict| {
+                control.register_conflict(conflict.conflict_id.clone());
+
                 if on_event
                     .send(FileOperationEvent::Conflict(conflict.clone()))
                     .is_err()
@@ -300,7 +307,7 @@ impl FileOperationControl {
     fn new() -> Self {
         Self {
             cancelled: AtomicBool::new(false),
-            conflict_resolutions: Mutex::new(HashMap::new()),
+            conflicts: Mutex::new(FileOperationConflictState::default()),
             conflict_resolved: Condvar::new(),
         }
     }
@@ -314,31 +321,61 @@ impl FileOperationControl {
         self.cancelled.load(Ordering::SeqCst)
     }
 
-    fn resolve(&self, conflict_id: FileConflictId, resolution: FileConflictResolution) {
-        if let Ok(mut resolutions) = self.conflict_resolutions.lock() {
-            resolutions.insert(conflict_id, resolution);
+    fn register_conflict(&self, conflict_id: FileConflictId) {
+        let mut conflicts = self
+            .conflicts
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        conflicts.pending.insert(conflict_id);
+    }
+
+    fn resolve(
+        &self,
+        conflict_id: FileConflictId,
+        resolution: FileConflictResolution,
+    ) -> Result<(), ExplorerError> {
+        let mut conflicts = self
+            .conflicts
+            .lock()
+            .map_err(|_| {
+                ExplorerError::new(
+                    "file_operation_control_unavailable",
+                    "File operation conflict state is unavailable.",
+                )
+            })?;
+
+        if !conflicts.pending.contains(&conflict_id) {
+            return Err(ExplorerError::new(
+                "file_operation_conflict_not_found",
+                format!("No pending file operation conflict with id '{}' was found.", conflict_id),
+            ));
         }
+
+        conflicts.resolutions.insert(conflict_id, resolution);
         self.conflict_resolved.notify_all();
+        Ok(())
     }
 
     fn wait_for_resolution(&self, conflict_id: &str) -> Option<FileConflictResolution> {
-        let mut resolutions = self
-            .conflict_resolutions
+        let mut conflicts = self
+            .conflicts
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
 
         loop {
             if self.is_cancelled() {
+                conflicts.pending.remove(conflict_id);
                 return None;
             }
 
-            if let Some(resolution) = resolutions.remove(conflict_id) {
+            if let Some(resolution) = conflicts.resolutions.remove(conflict_id) {
+                conflicts.pending.remove(conflict_id);
                 return Some(resolution);
             }
 
-            resolutions = self
+            conflicts = self
                 .conflict_resolved
-                .wait(resolutions)
+                .wait(conflicts)
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
         }
     }
@@ -352,7 +389,12 @@ fn validate_request(request: &StartFileOperationRequest) -> Result<(), ExplorerE
         ));
     }
 
-    if request.source_paths.is_empty() {
+    if request.source_paths.is_empty()
+        || request
+            .source_paths
+            .iter()
+            .any(|path| path.trim().is_empty())
+    {
         return Err(ExplorerError::new(
             "file_operation_sources_empty",
             "Select at least one item before copying or moving.",
@@ -419,8 +461,11 @@ mod tests {
         let control = Arc::new(FileOperationControl::new());
         let waiting_control = Arc::clone(&control);
 
+        control.register_conflict("conflict-1".to_string());
         let handle = std::thread::spawn(move || waiting_control.wait_for_resolution("conflict-1"));
-        control.resolve("conflict-1".to_string(), FileConflictResolution::KeepBoth);
+        control
+            .resolve("conflict-1".to_string(), FileConflictResolution::KeepBoth)
+            .expect("registered conflict should resolve");
 
         assert_eq!(
             handle.join().expect("thread should finish"),
@@ -433,10 +478,22 @@ mod tests {
         let control = Arc::new(FileOperationControl::new());
         let waiting_control = Arc::clone(&control);
 
+        control.register_conflict("conflict-1".to_string());
         let handle = std::thread::spawn(move || waiting_control.wait_for_resolution("conflict-1"));
         control.cancel();
 
         assert_eq!(handle.join().expect("thread should finish"), None);
+    }
+
+    #[test]
+    fn conflict_control_rejects_unknown_conflict_ids() {
+        let control = FileOperationControl::new();
+
+        let error = control
+            .resolve("missing-conflict".to_string(), FileConflictResolution::Skip)
+            .expect_err("unknown conflicts should fail");
+
+        assert_eq!(error.code, "file_operation_conflict_not_found");
     }
 
     #[test]
@@ -449,6 +506,20 @@ mod tests {
             default_conflict_resolution: None,
         })
         .expect_err("empty sources should fail");
+
+        assert_eq!(error.code, "file_operation_sources_empty");
+    }
+
+    #[test]
+    fn validate_request_rejects_blank_sources() {
+        let error = validate_request(&StartFileOperationRequest {
+            operation_id: "operation-1".to_string(),
+            kind: FileOperationKind::Copy,
+            source_paths: vec!["   ".to_string()],
+            destination_directory: r"C:\".to_string(),
+            default_conflict_resolution: None,
+        })
+        .expect_err("blank sources should fail");
 
         assert_eq!(error.code, "file_operation_sources_empty");
     }

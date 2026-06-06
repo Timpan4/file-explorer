@@ -23,11 +23,15 @@
     }
 
     resolving = resolution;
-    await explorerFileOperations.resolveConflict(
-      pendingConflict.operationId,
-      pendingConflict.conflictId,
-      resolution
-    );
+    try {
+      await explorerFileOperations.resolveConflict(
+        pendingConflict.operationId,
+        pendingConflict.conflictId,
+        resolution
+      );
+    } finally {
+      resolving = null;
+    }
   }
 
   async function cancelOperation() {
@@ -36,7 +40,11 @@
     }
 
     resolving = "cancel";
-    await explorerFileOperations.cancel(pendingConflict.operationId);
+    try {
+      await explorerFileOperations.cancel(pendingConflict.operationId);
+    } finally {
+      resolving = null;
+    }
   }
 
   function shortPath(path: string) {
