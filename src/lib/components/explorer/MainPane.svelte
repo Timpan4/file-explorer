@@ -2,6 +2,7 @@
   import { onDestroy } from "svelte";
   import CommandBar from "$lib/components/explorer/CommandBar.svelte";
   import ContextMenu from "$lib/components/explorer/ContextMenu.svelte";
+  import FileOperationConflictDialog from "$lib/components/explorer/FileOperationConflictDialog.svelte";
   import { explorerSession } from "$lib/stores/explorerSession";
   import DirectoryHeader from "$lib/components/explorer/DirectoryHeader.svelte";
   import DirectoryList from "$lib/components/explorer/DirectoryList.svelte";
@@ -17,7 +18,7 @@
   const filteredItems = $derived(explorerState.filteredItems);
   const currentPath = $derived(explorerState.currentPath);
   const error = $derived(explorerState.error);
-  const appliedSearchQuery = $derived(($explorerSession as any).appliedSearchQuery as string);
+  const appliedSearchQuery = $derived(explorerState.appliedSearchQuery);
   const activeJobId = $derived(explorerState.activeJobId);
   const isRefreshing = $derived(explorerState.isRefreshing);
   const items = $derived(explorerState.items);
@@ -100,6 +101,7 @@
   </div>
 
   <ContextMenu />
+  <FileOperationConflictDialog />
 </section>
 
 <style>

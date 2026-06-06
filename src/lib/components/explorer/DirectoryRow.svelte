@@ -170,7 +170,7 @@
     border-radius: 4px;
     user-select: none;
     -webkit-user-select: none;
-    width: fit-content;
+    width: 100%;
   }
 
   .row > span {
@@ -178,7 +178,7 @@
   }
 
   .row > span + span {
-    padding-left: 10px;
+    padding-left: 6px;
   }
 
   .row > span + span::before {

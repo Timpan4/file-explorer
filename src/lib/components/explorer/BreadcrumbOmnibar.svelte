@@ -11,7 +11,7 @@
   let { onNavigate }: { onNavigate: (path: string) => void } = $props();
   const explorerState = $derived($explorerSession);
   const currentPath = $derived(explorerState.currentPath);
-  const stagedSearchQuery = $derived(($explorerSession as any).stagedSearchQuery as string);
+  const stagedSearchQuery = $derived(explorerState.stagedSearchQuery);
   const status = $derived(explorerState.status);
   const backHistory = $derived(explorerState.backHistory);
   const forwardHistory = $derived(explorerState.forwardHistory);

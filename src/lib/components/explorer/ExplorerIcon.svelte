@@ -4,7 +4,7 @@
     size = 16,
     decorative = true
   }: {
-    name: "home" | "folder" | "drive" | "file" | "symlink";
+    name: "home" | "folder" | "drive" | "file" | "symlink" | "settings";
     size?: number;
     decorative?: boolean;
   } = $props();
@@ -40,6 +40,12 @@
       <path d="M9.2 2.5v2.05c0 .41.34.75.75.75H12" class="stroke-line"/>
       <path d="M5.2 10.2h2.55c1.52 0 2.75-1.23 2.75-2.75V6.8" class="link-line"/>
       <path d="m8.95 7.05 1.55-1.55 1.55 1.55" class="link-line"/>
+    </svg>
+  {:else if name === "settings"}
+    <svg viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="2.1" class="surface"/>
+      <path d="M8 2.6v1.15M8 12.25v1.15M3.33 5.3l1 .58M11.67 10.12l1 .58M3.33 10.7l1-.58M11.67 5.88l1-.58" class="stroke-line"/>
+      <path d="M5.35 3.78 6.1 4.5M9.9 11.5l.75.72M5.35 12.22l.75-.72M9.9 4.5l.75-.72" class="stroke-line"/>
     </svg>
   {:else}
     <svg viewBox="0 0 16 16" fill="none">

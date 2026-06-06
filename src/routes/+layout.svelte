@@ -25,11 +25,11 @@
     --panel-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
     --header-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
     --header-bg: rgba(248, 250, 252, 0.92);
-    --content-bg: rgba(255, 255, 255, 0.92);
-    --sidebar-bg-start: rgba(246, 248, 250, 0.96);
+    --content-bg: rgba(249, 250, 252, 0.96);
+    --sidebar-bg-start: rgba(244, 248, 251, 0.96);
     --sidebar-bg-end: rgba(241, 244, 248, 0.98);
     --sidebar-divider: rgba(15, 23, 42, 0.08);
-    --button-bg: rgba(255, 255, 255, 0.88);
+    --button-bg: rgba(242, 246, 251, 0.9);
     --button-border: rgba(15, 23, 42, 0.1);
     --button-hover-border: rgba(59, 130, 246, 0.18);
     --button-hover-bg: rgba(239, 246, 255, 0.94);
@@ -39,14 +39,14 @@
     --accent-soft-strong: rgba(37, 99, 235, 0.08);
     --accent-text: #0f3d91;
     --pill-text: #2458b8;
-    --surface-raised: rgba(255, 255, 255, 0.96);
-    --surface-subtle: #f7f9fb;
-    --surface-input: #ffffff;
+    --surface-raised: rgba(250, 252, 255, 0.98);
+    --surface-subtle: #f7f9fc;
+    --surface-input: #f8fafc;
     --row-border: rgba(15, 23, 42, 0.06);
     --focus-ring: #3b82f6;
     --selection-bg: rgba(37, 99, 235, 0.14);
     --selection-border: rgba(37, 99, 235, 0.2);
-    --selection-text: #123e91;
+    --selection-text: #0f3c84;
     --icon-folder-start: #f7d96d;
     --icon-folder-end: #e2b449;
     --icon-file-start: #9ec2ff;
@@ -151,7 +151,7 @@
     margin: 0;
     height: 100%;
     overflow: hidden;
-    color: var(--text-primary);
+    color: var(--text-primary, #1f2937);
     background:
       linear-gradient(180deg, var(--app-bg-overlay), var(--app-bg-overlay)),
       linear-gradient(180deg, var(--app-bg-gradient-start) 0%, var(--app-bg-gradient-end) 100%);
