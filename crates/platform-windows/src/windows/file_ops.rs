@@ -1,7 +1,7 @@
 use file_explorer_core::directory::{DirectoryItemKind, ExplorerError};
 use file_explorer_core::file_operations::{
     FileConflictResolution, FileOperationConflict, FileOperationFailure, FileOperationItem,
-    FileOperationProgress, StartFileOperationRequest,
+    FileOperationKind, FileOperationProgress, StartFileOperationRequest,
 };
 use std::collections::BTreeSet;
 use std::ffi::OsString;
@@ -88,6 +88,7 @@ where
 
         let mut destination_path = destination_directory.join(&prepared_source.name);
         let destination_existed = destination_path.exists();
+        let mut replace_existing = false;
 
         if prepared_source.kind == DirectoryItemKind::Directory
             && path_matches_or_is_descendant(
@@ -120,7 +121,7 @@ where
                 super::fs::canonicalize_existing_path(destination_path.to_string_lossy().as_ref())
                     .ok();
 
-            if request.kind == file_explorer_core::file_operations::FileOperationKind::Move
+            if request.kind == FileOperationKind::Move
                 && destination_canonical_path.as_deref()
                     == Some(prepared_source.source_canonical_path.as_str())
             {
@@ -178,7 +179,7 @@ where
                 }
                 FileConflictResolution::Replace => {
                     if let Some(destination_canonical_path) = destination_canonical_path {
-                        if request.kind == file_explorer_core::file_operations::FileOperationKind::Copy
+                        if request.kind == FileOperationKind::Copy
                             && destination_canonical_path
                                 == prepared_source.source_canonical_path
                         {
@@ -198,7 +199,7 @@ where
                             .affected_descendant_paths
                             .insert(destination_canonical_path);
                     }
-                    remove_existing_path(&destination_path)?;
+                    replace_existing = true;
                 }
                 FileConflictResolution::KeepBoth => {
                     destination_path = allocate_keep_both_path(&destination_path)?;
@@ -206,20 +207,29 @@ where
             }
         }
 
-        let result = match request.kind {
-            file_explorer_core::file_operations::FileOperationKind::Copy => {
+        let result = if replace_existing {
+            replace_path(
+                &prepared_source.source_path,
+                &destination_path,
+                request.kind,
+                &mut should_cancel,
+            )
+        } else {
+            match request.kind {
+            FileOperationKind::Copy => {
                 copy_path(
                     &prepared_source.source_path,
                     &destination_path,
                     &mut should_cancel,
                 )
             }
-            file_explorer_core::file_operations::FileOperationKind::Move => {
+            FileOperationKind::Move => {
                 move_path(
                     &prepared_source.source_path,
                     &destination_path,
                     &mut should_cancel,
                 )
+            }
             }
         };
 
@@ -229,7 +239,7 @@ where
                     .affected_parent_paths
                     .insert(destination_parent_canonical_path.clone());
 
-                if request.kind == file_explorer_core::file_operations::FileOperationKind::Move {
+                if request.kind == FileOperationKind::Move {
                     if let Some(source_parent) = &prepared_source.source_parent_canonical_path {
                         accumulator
                             .affected_parent_paths
@@ -274,6 +284,12 @@ where
                 return Ok(FileOperationExecution::Cancelled(accumulator.into_report()));
             }
             Err(error) => {
+                mark_destination_if_present(
+                    &mut accumulator,
+                    &destination_parent_canonical_path,
+                    &destination_path,
+                    &prepared_source.kind,
+                );
                 accumulator.failed.push(FileOperationFailure {
                     source_path: prepared_source.source_display_path.clone(),
                     destination_path: Some(destination_path.to_string_lossy().to_string()),
@@ -418,6 +434,77 @@ where
     Ok(())
 }
 
+fn replace_path<C>(
+    source_path: &Path,
+    destination_path: &Path,
+    kind: FileOperationKind,
+    should_cancel: &mut C,
+) -> Result<(), ExplorerError>
+where
+    C: FnMut() -> bool,
+{
+    ensure_not_cancelled(should_cancel)?;
+
+    let staging_path = allocate_temporary_sibling_path(destination_path, "replacement")?;
+    let backup_path = allocate_temporary_sibling_path(destination_path, "backup")?;
+
+    if let Err(error) = copy_path(source_path, &staging_path, should_cancel) {
+        remove_path_if_exists(&staging_path);
+        return Err(error);
+    }
+
+    if let Err(error) = ensure_not_cancelled(should_cancel) {
+        remove_path_if_exists(&staging_path);
+        return Err(error);
+    }
+
+    rename_path(
+        destination_path,
+        &backup_path,
+        "replace_target_backup_failed",
+        "Could not stage existing replacement target",
+    )
+    .inspect_err(|_| remove_path_if_exists(&staging_path))?;
+
+    if let Err(error) = rename_path(
+        &staging_path,
+        destination_path,
+        "replace_target_failed",
+        "Could not install replacement target",
+    ) {
+        let _ = fs::rename(&backup_path, destination_path);
+        remove_path_if_exists(&staging_path);
+        return Err(error);
+    }
+
+    remove_existing_path(&backup_path).map_err(|error| {
+        ExplorerError::new(
+            "replace_backup_cleanup_failed",
+            format!(
+                "Replaced '{}', but could not remove the staged backup: {}",
+                destination_path.display(),
+                error.message
+            ),
+        )
+    })?;
+
+    if kind == FileOperationKind::Move {
+        remove_existing_path(source_path).map_err(|error| {
+            ExplorerError::new(
+                "move_failed",
+                format!(
+                    "Could not finish moving '{}' to '{}': copied the item, but removing the source failed with {}",
+                    source_path.display(),
+                    destination_path.display(),
+                    error.message
+                ),
+            )
+        })?;
+    }
+
+    Ok(())
+}
+
 fn move_path<C>(
     source_path: &Path,
     destination_path: &Path,
@@ -429,12 +516,16 @@ where
     ensure_not_cancelled(should_cancel)?;
 
     match fs::rename(source_path, destination_path) {
-        Ok(()) => Ok(()),
-        Err(rename_error) => {
-            copy_path(source_path, destination_path, should_cancel).map_err(|copy_error| {
-                ExplorerError::new(
-                    "move_failed",
-                    format!(
+            Ok(()) => Ok(()),
+            Err(rename_error) => {
+                copy_path(source_path, destination_path, should_cancel).map_err(|copy_error| {
+                    if copy_error.code == "file_operation_cancelled" {
+                        return copy_error;
+                    }
+
+                    ExplorerError::new(
+                        "move_failed",
+                        format!(
                         "Could not move '{}' to '{}': rename failed with {rename_error}; copy fallback failed with {}",
                         source_path.display(),
                         destination_path.display(),
@@ -481,6 +572,91 @@ fn path_matches_or_is_descendant(path: &str, ancestor: &str) -> bool {
     let ancestor_with_separator = format!("{normalized_ancestor}\\");
 
     normalized_path == normalized_ancestor || normalized_path.starts_with(&ancestor_with_separator)
+}
+
+fn mark_destination_if_present(
+    accumulator: &mut ExecutionAccumulator,
+    destination_parent_canonical_path: &str,
+    destination_path: &Path,
+    kind: &DirectoryItemKind,
+) {
+    if !destination_path.exists() {
+        return;
+    }
+
+    accumulator
+        .affected_parent_paths
+        .insert(destination_parent_canonical_path.to_string());
+
+    if *kind == DirectoryItemKind::Directory {
+        if let Ok(destination_canonical_path) =
+            super::fs::canonicalize_existing_path(destination_path.to_string_lossy().as_ref())
+        {
+            accumulator
+                .affected_descendant_paths
+                .insert(destination_canonical_path);
+        }
+    }
+}
+
+fn allocate_temporary_sibling_path(
+    destination_path: &Path,
+    purpose: &str,
+) -> Result<PathBuf, ExplorerError> {
+    let parent = destination_path.parent().ok_or_else(|| {
+        ExplorerError::new(
+            "replace_temp_path_failed",
+            format!(
+                "Could not prepare a temporary replacement path for '{}'.",
+                destination_path.display()
+            ),
+        )
+    })?;
+    let file_name = destination_path
+        .file_name()
+        .map(|name| name.to_string_lossy())
+        .unwrap_or_else(|| "Item".into());
+
+    for sequence in 1..=u16::MAX {
+        let candidate = parent.join(format!(
+            ".file-explorer-{purpose}-{sequence}-{file_name}"
+        ));
+        if !candidate.exists() {
+            return Ok(candidate);
+        }
+    }
+
+    Err(ExplorerError::new(
+        "replace_temp_path_exhausted",
+        format!(
+            "Could not allocate a temporary replacement path for '{}'.",
+            destination_path.display()
+        ),
+    ))
+}
+
+fn rename_path(
+    source_path: &Path,
+    destination_path: &Path,
+    code: &str,
+    action: &str,
+) -> Result<(), ExplorerError> {
+    fs::rename(source_path, destination_path).map_err(|error| {
+        ExplorerError::new(
+            code,
+            format!(
+                "{action} '{}' as '{}': {error}",
+                source_path.display(),
+                destination_path.display()
+            ),
+        )
+    })
+}
+
+fn remove_path_if_exists(path: &Path) {
+    if path.exists() {
+        let _ = remove_existing_path(path);
+    }
 }
 
 fn remove_existing_path(path: &Path) -> Result<(), ExplorerError> {

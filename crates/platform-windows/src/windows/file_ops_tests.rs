@@ -128,6 +128,55 @@ fn conflict_replace_overwrites_existing_file() {
 }
 
 #[test]
+fn conflict_replace_preserves_existing_file_when_copy_fails() {
+    let temp_dir = temp_case("replace-copy-failure-test");
+    let source_dir = temp_dir.join("source");
+    let destination_dir = temp_dir.join("destination");
+    let source_file = source_dir.join("report.txt");
+    let destination_file = destination_dir.join("report.txt");
+    fs::create_dir_all(&source_dir).expect("source dir");
+    fs::create_dir_all(&destination_dir).expect("destination dir");
+    fs::write(&source_file, "from source").expect("source file");
+    fs::write(&destination_file, "existing").expect("destination file");
+    let mut cancel_checks = 0;
+
+    let request = StartFileOperationRequest {
+        operation_id: "operation-1".to_string(),
+        kind: FileOperationKind::Copy,
+        source_paths: vec![source_file.to_string_lossy().to_string()],
+        destination_directory: destination_dir.to_string_lossy().to_string(),
+        default_conflict_resolution: Some(FileConflictResolution::Replace),
+    };
+
+    let execution = execute_file_operation(
+        &request,
+        || {
+            cancel_checks += 1;
+            if cancel_checks == 2 {
+                fs::remove_file(&source_file).expect("remove source before replacement copy");
+            }
+            false
+        },
+        |_| None,
+        |_| {},
+    )
+    .expect("operation should report item failure");
+    let report = match execution {
+        FileOperationExecution::Completed(report) => report,
+        FileOperationExecution::Cancelled(_) => panic!("operation should not cancel"),
+    };
+
+    assert!(report.completed.is_empty());
+    assert_eq!(report.failed.len(), 1);
+    assert_eq!(
+        fs::read_to_string(destination_file).expect("destination contents"),
+        "existing"
+    );
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
 fn copy_to_same_path_with_replace_skips_without_deleting_source() {
     let temp_dir = temp_case("replace-self-copy-test");
     let source_dir = temp_dir.join("source");
@@ -159,6 +208,58 @@ fn copy_to_same_path_with_replace_skips_without_deleting_source() {
         fs::read_to_string(source_dir.join("report.txt")).expect("source contents"),
         "source"
     );
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn partial_directory_copy_failure_marks_destination_affected() {
+    let temp_dir = temp_case("partial-copy-failure-refresh-test");
+    let source_dir = temp_dir.join("source");
+    let destination_dir = temp_dir.join("destination");
+    let copied_dir = destination_dir.join("source");
+    let copied_file_blocker = copied_dir.join("report.txt");
+    fs::create_dir_all(&source_dir).expect("source dir");
+    fs::create_dir_all(&destination_dir).expect("destination dir");
+    fs::write(source_dir.join("report.txt"), "source").expect("source file");
+    let mut cancel_checks = 0;
+
+    let request = StartFileOperationRequest {
+        operation_id: "operation-1".to_string(),
+        kind: FileOperationKind::Copy,
+        source_paths: vec![source_dir.to_string_lossy().to_string()],
+        destination_directory: destination_dir.to_string_lossy().to_string(),
+        default_conflict_resolution: Some(FileConflictResolution::KeepBoth),
+    };
+
+    let execution = execute_file_operation(
+        &request,
+        || {
+            cancel_checks += 1;
+            if cancel_checks == 3 {
+                fs::create_dir(&copied_file_blocker).expect("block copied file path");
+            }
+            false
+        },
+        |_| None,
+        |_| {},
+    )
+    .expect("operation should report item failure");
+    let report = match execution {
+        FileOperationExecution::Completed(report) => report,
+        FileOperationExecution::Cancelled(_) => panic!("operation should not cancel"),
+    };
+
+    assert!(report.completed.is_empty());
+    assert_eq!(report.failed.len(), 1);
+    assert_eq!(
+        report.affected_parent_paths,
+        vec![
+            super::super::fs::canonicalize_folder_path(destination_dir.to_string_lossy().as_ref())
+                .expect("canonical destination")
+        ]
+    );
+    assert!(copied_dir.exists());
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
