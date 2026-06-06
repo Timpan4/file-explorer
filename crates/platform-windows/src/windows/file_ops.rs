@@ -576,11 +576,10 @@ where
             })?;
 
             if let Err(remove_error) = remove_existing_path(source_path) {
-                let _ = remove_existing_path(destination_path);
                 return Err(ExplorerError::new(
                     "move_failed",
                     format!(
-                        "Could not finish moving '{}' to '{}': copied the item, but removing the source failed with {}",
+                        "Could not finish moving '{}' to '{}': copied the item, but removing the source failed with {}. The copied destination was kept to avoid data loss.",
                         source_path.display(),
                         destination_path.display(),
                         remove_error.message
