@@ -9,7 +9,7 @@ use file_explorer_core::file_operations::{
 use file_explorer_platform_windows::windows::file_ops::{
     execute_file_operation, FileOperationExecution, FileOperationExecutionReport,
 };
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use tauri::ipc::Channel;
@@ -427,13 +427,15 @@ fn completed_event(
     request: &StartFileOperationRequest,
     report: FileOperationExecutionReport,
 ) -> FileOperationCompleted {
+    let affected_parent_paths = terminal_affected_paths(&report);
+
     FileOperationCompleted {
         operation_id: request.operation_id.clone(),
         kind: request.kind,
         completed: report.completed,
         skipped: report.skipped,
         failed: report.failed,
-        affected_parent_paths: report.affected_parent_paths,
+        affected_parent_paths,
     }
 }
 
@@ -441,14 +443,27 @@ fn cancelled_event(
     request: &StartFileOperationRequest,
     report: FileOperationExecutionReport,
 ) -> FileOperationCancelled {
+    let affected_parent_paths = terminal_affected_paths(&report);
+
     FileOperationCancelled {
         operation_id: request.operation_id.clone(),
         kind: request.kind,
         completed: report.completed,
         skipped: report.skipped,
         failed: report.failed,
-        affected_parent_paths: report.affected_parent_paths,
+        affected_parent_paths,
     }
+}
+
+fn terminal_affected_paths(report: &FileOperationExecutionReport) -> Vec<String> {
+    report
+        .affected_parent_paths
+        .iter()
+        .chain(report.affected_descendant_paths.iter())
+        .cloned()
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
 }
 
 #[cfg(test)]
@@ -522,5 +537,31 @@ mod tests {
         .expect_err("blank sources should fail");
 
         assert_eq!(error.code, "file_operation_sources_empty");
+    }
+
+    #[test]
+    fn terminal_events_include_descendant_paths_for_refresh() {
+        let request = StartFileOperationRequest {
+            operation_id: "operation-1".to_string(),
+            kind: FileOperationKind::Move,
+            source_paths: vec![r"C:\Work\Foo".to_string()],
+            destination_directory: r"D:\Archive".to_string(),
+            default_conflict_resolution: None,
+        };
+        let event = completed_event(
+            &request,
+            FileOperationExecutionReport {
+                completed: Vec::new(),
+                skipped: Vec::new(),
+                failed: Vec::new(),
+                affected_parent_paths: vec![r"D:\Archive".to_string()],
+                affected_descendant_paths: vec![r"C:\Work\Foo".to_string()],
+            },
+        );
+
+        assert_eq!(
+            event.affected_parent_paths,
+            vec![r"C:\Work\Foo".to_string(), r"D:\Archive".to_string()]
+        );
     }
 }

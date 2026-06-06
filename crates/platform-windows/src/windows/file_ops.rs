@@ -268,18 +268,12 @@ where
                     .push(operation_item(&prepared_source, &destination_path));
             }
             Err(error) if error.code == "file_operation_cancelled" => {
-                accumulator
-                    .affected_parent_paths
-                    .insert(destination_parent_canonical_path.clone());
-                if prepared_source.kind == DirectoryItemKind::Directory {
-                    if let Ok(destination_canonical_path) = super::fs::canonicalize_existing_path(
-                        destination_path.to_string_lossy().as_ref(),
-                    ) {
-                        accumulator
-                            .affected_descendant_paths
-                            .insert(destination_canonical_path);
-                    }
-                }
+                mark_destination_if_present(
+                    &mut accumulator,
+                    &destination_parent_canonical_path,
+                    &destination_path,
+                    &prepared_source.kind,
+                );
 
                 return Ok(FileOperationExecution::Cancelled(accumulator.into_report()));
             }
@@ -383,6 +377,11 @@ where
         )
     })?;
 
+    if metadata.file_type().is_symlink() {
+        copy_symlink(source_path, destination_path)?;
+        return Ok(());
+    }
+
     if metadata.is_dir() {
         fs::create_dir(destination_path).map_err(|error| {
             ExplorerError::new(
@@ -432,6 +431,48 @@ where
     })?;
 
     Ok(())
+}
+
+fn copy_symlink(source_path: &Path, destination_path: &Path) -> Result<(), ExplorerError> {
+    let target = fs::read_link(source_path).map_err(|error| {
+        ExplorerError::new(
+            "copy_symlink_read_failed",
+            format!("Could not read symlink '{}': {error}", source_path.display()),
+        )
+    })?;
+
+    create_symlink(&target, destination_path, source_path.is_dir()).map_err(|error| {
+        ExplorerError::new(
+            "copy_symlink_failed",
+            format!(
+                "Could not copy symlink '{}' to '{}': {error}",
+                source_path.display(),
+                destination_path.display()
+            ),
+        )
+    })
+}
+
+#[cfg(windows)]
+fn create_symlink(
+    target: &Path,
+    destination_path: &Path,
+    target_is_directory: bool,
+) -> std::io::Result<()> {
+    if target_is_directory {
+        std::os::windows::fs::symlink_dir(target, destination_path)
+    } else {
+        std::os::windows::fs::symlink_file(target, destination_path)
+    }
+}
+
+#[cfg(unix)]
+fn create_symlink(
+    target: &Path,
+    destination_path: &Path,
+    _target_is_directory: bool,
+) -> std::io::Result<()> {
+    std::os::unix::fs::symlink(target, destination_path)
 }
 
 fn replace_path<C>(

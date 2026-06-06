@@ -1,6 +1,6 @@
 use super::*;
 use file_explorer_core::file_operations::FileOperationKind;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 fn temp_case(name: &str) -> PathBuf {
     let timestamp = std::time::SystemTime::now()
@@ -13,6 +13,16 @@ fn temp_case(name: &str) -> PathBuf {
     ));
     let _ = fs::remove_dir_all(&path);
     path
+}
+
+#[cfg(windows)]
+fn create_test_file_symlink(target: &Path, link: &Path) -> std::io::Result<()> {
+    std::os::windows::fs::symlink_file(target, link)
+}
+
+#[cfg(unix)]
+fn create_test_file_symlink(target: &Path, link: &Path) -> std::io::Result<()> {
+    std::os::unix::fs::symlink(target, link)
 }
 
 #[test]
@@ -86,6 +96,52 @@ fn conflict_keep_both_copies_to_unique_name() {
     assert_eq!(
         fs::read_to_string(destination_dir.join("report - Copy.txt")).expect("copy contents"),
         "from source"
+    );
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn copy_file_symlink_preserves_link_entry() {
+    let temp_dir = temp_case("copy-symlink-test");
+    let source_dir = temp_dir.join("source");
+    let destination_dir = temp_dir.join("destination");
+    let target_file = source_dir.join("target.txt");
+    let symlink_file = source_dir.join("report-link.txt");
+    let copied_symlink = destination_dir.join("report-link.txt");
+    fs::create_dir_all(&source_dir).expect("source dir");
+    fs::create_dir_all(&destination_dir).expect("destination dir");
+    fs::write(&target_file, "target").expect("target file");
+    if create_test_file_symlink(&target_file, &symlink_file).is_err() {
+        let _ = fs::remove_dir_all(&temp_dir);
+        return;
+    }
+
+    let request = StartFileOperationRequest {
+        operation_id: "operation-1".to_string(),
+        kind: FileOperationKind::Copy,
+        source_paths: vec![symlink_file.to_string_lossy().to_string()],
+        destination_directory: destination_dir.to_string_lossy().to_string(),
+        default_conflict_resolution: Some(FileConflictResolution::KeepBoth),
+    };
+
+    let execution =
+        execute_file_operation(&request, || false, |_| None, |_| {}).expect("operation should run");
+    let report = match execution {
+        FileOperationExecution::Completed(report) => report,
+        FileOperationExecution::Cancelled(_) => panic!("operation should not cancel"),
+    };
+
+    assert_eq!(report.completed.len(), 1);
+    assert!(
+        fs::symlink_metadata(&copied_symlink)
+            .expect("copied link metadata")
+            .file_type()
+            .is_symlink()
+    );
+    assert_eq!(
+        fs::read_link(&copied_symlink).expect("copied link target"),
+        target_file
     );
 
     let _ = fs::remove_dir_all(&temp_dir);
