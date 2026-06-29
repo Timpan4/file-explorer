@@ -1,0 +1,47 @@
+name: CodSpeed
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  # Allow running the benchmarks manually from the Actions tab.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Required for CodSpeed OIDC authentication.
+  id-token: write
+
+concurrency:
+  group: codspeed-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmarks:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Setup Rust toolchain and cargo-codspeed
+        uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
+        with:
+          channel: stable
+          cache-target: release
+          bins: cargo-codspeed
+
+      - name: Build benchmarks
+        run: cargo codspeed build -p file-explorer-core
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@a4a36bb07c0638b0b4ca52bf1f3dad1b4289e52f
+        with:
+          mode: simulation
+          run: cargo codspeed run -p file-explorer-core
