@@ -765,7 +765,7 @@
 
   .close-button:hover {
     background: #c42b1c;
-    color: white;
+    color: var(--button-text, #f8f8f8);
   }
 
   .window-body {

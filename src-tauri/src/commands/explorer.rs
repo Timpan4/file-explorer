@@ -4,6 +4,10 @@ use file_explorer_core::directory::{
     DeleteToRecycleBinResponse, ExplorerError, NativeIconBatchRequest, NativeIconBatchResponse,
     NavigationRequest, OpenPathRequest, RenameRequest, RenameResponse, SidebarRoot,
 };
+use file_explorer_core::file_operations::{
+    CancelFileOperationRequest, FileOperationEvent, ResolveFileOperationConflictRequest,
+    StartFileOperationRequest,
+};
 use std::sync::Arc;
 use tauri::{ipc::Channel, State};
 
@@ -69,4 +73,29 @@ pub fn delete_to_recycle_bin(
     request: DeleteToRecycleBinRequest,
 ) -> Result<DeleteToRecycleBinResponse, ExplorerError> {
     explorer.delete_to_recycle_bin(request)
+}
+
+#[tauri::command]
+pub fn start_file_operation(
+    explorer: State<'_, Arc<ExplorerService>>,
+    request: StartFileOperationRequest,
+    on_event: Channel<FileOperationEvent>,
+) -> Result<(), ExplorerError> {
+    explorer.start_file_operation(request, on_event)
+}
+
+#[tauri::command]
+pub fn cancel_file_operation(
+    explorer: State<'_, Arc<ExplorerService>>,
+    request: CancelFileOperationRequest,
+) -> Result<(), ExplorerError> {
+    explorer.cancel_file_operation(request)
+}
+
+#[tauri::command]
+pub fn resolve_file_operation_conflict(
+    explorer: State<'_, Arc<ExplorerService>>,
+    request: ResolveFileOperationConflictRequest,
+) -> Result<(), ExplorerError> {
+    explorer.resolve_file_operation_conflict(request)
 }

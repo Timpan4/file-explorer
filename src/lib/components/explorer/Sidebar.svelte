@@ -53,7 +53,7 @@
   <div class="footer-nav">
     <Button className="settings-link" active={open} onclick={() => settingsUi.openSettings()}>
       {#snippet icon()}
-        <ExplorerIcon name="home" size={16} />
+        <ExplorerIcon name="settings" size={16} />
       {/snippet}
       Settings
     </Button>

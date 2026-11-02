@@ -18,7 +18,10 @@ pub fn run() {
             commands::explorer::rename_directory_item,
             commands::explorer::open_directory_item,
             commands::explorer::create_directory,
-            commands::explorer::delete_to_recycle_bin
+            commands::explorer::delete_to_recycle_bin,
+            commands::explorer::start_file_operation,
+            commands::explorer::cancel_file_operation,
+            commands::explorer::resolve_file_operation_conflict
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

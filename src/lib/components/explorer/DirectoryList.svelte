@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { explorerUi } from "$lib/stores/explorerUi";
+  import { explorerUi, getTableWidth } from "$lib/stores/explorerUi";
   import { explorerSession } from "$lib/stores/explorerSession";
   import type { DirectoryItemStub, JobId } from "$lib/types/explorer";
   import DirectoryRow from "$lib/components/explorer/DirectoryRow.svelte";
@@ -35,7 +35,9 @@
   let lastHandledFocusItemId = $state<string | null>(null);
 
   let { selectedIds, focusedItemId } = $derived($explorerSession);
+  let { columnWidths } = $derived($explorerUi);
   const rename = $derived(($explorerSession as { rename?: RenameState }).rename ?? null);
+  const tableWidth = $derived(getTableWidth(columnWidths, 10) + 24);
   const totalHeight = $derived(items.length * ROW_HEIGHT);
   const visibleCount = $derived(Math.max(1, Math.ceil(viewportHeight / ROW_HEIGHT)));
   const startIndex = $derived(Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN));
@@ -219,7 +221,7 @@
   role="listbox"
   aria-label="Directory listing"
 >
-  <div class="table-surface">
+  <div class="table-surface" style={`--table-width:${tableWidth}px;`}>
     <div class="spacer" style={`height:${topSpacerHeight}px;`}></div>
     {#each visibleItems as item, offset (item.id)}
       <DirectoryRow
@@ -258,6 +260,8 @@
 
   .table-surface {
     display: grid;
+    width: 100%;
+    min-width: var(--table-width);
   }
 
   .list:not(:focus-within) :global(.row.selected) {

@@ -2,11 +2,13 @@
   import ActionGlyph from "$lib/components/explorer/ActionGlyph.svelte";
   import { onDestroy } from "svelte";
   import { getActionsForSurface, runExplorerAction } from "$lib/stores/explorerActions";
+  import { explorerFileOperations } from "$lib/stores/explorerFileOperations";
   import { explorerSession } from "$lib/stores/explorerSession";
   import { explorerUi } from "$lib/stores/explorerUi";
 
   let { contextMenu } = $derived($explorerUi);
   let { currentPath, selectedIds, items } = $derived($explorerSession);
+  let { clipboard } = $derived($explorerFileOperations);
   const actionContext = $derived.by(() => {
     const selectedIdSet = new Set(selectedIds);
     const selectedItems = items.filter((item) => selectedIdSet.has(item.id));
@@ -16,7 +18,7 @@
       selectedItems,
       selectedCount: selectedItems.length,
       hasSelection: selectedItems.length > 0,
-      clipboardAvailable: false
+      clipboardAvailable: Boolean(clipboard && clipboard.items.length > 0)
     };
   });
   const actions = $derived(contextMenu.open ? getActionsForSurface(contextMenu.surface, actionContext) : []);
@@ -55,10 +57,9 @@
     min-width: 200px;
     padding: 6px;
     border: 1px solid color-mix(in srgb, var(--panel-border) 92%, transparent);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--surface-raised) 99%, transparent);
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
-    backdrop-filter: blur(10px);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
   }
 
   .item {
@@ -69,7 +70,7 @@
     min-height: 30px;
     padding: 0 10px;
     border: 1px solid transparent;
-    border-radius: 7px;
+    border-radius: 4px;
     background: transparent;
     color: var(--text-primary);
     text-align: left;

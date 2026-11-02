@@ -31,10 +31,6 @@
     {:else if icon === "paste"}
       <path d="M5.25 4H4.5A1.25 1.25 0 0 0 3.25 5.25v6A1.25 1.25 0 0 0 4.5 12.5h7A1.25 1.25 0 0 0 12.75 11.25v-6A1.25 1.25 0 0 0 11.5 4h-.75" />
       <rect x="5.5" y="2.25" width="5" height="2.5" rx="0.8" />
-    {:else if icon === "properties"}
-      <circle cx="8" cy="8" r="5.25" />
-      <path d="M8 7v3" />
-      <circle cx="8" cy="4.75" r=".6" fill="currentColor" stroke="none" />
     {:else if icon === "open"}
       <path d="M6.25 4.25h5.5v5.5" />
       <path d="m11.75 4.25-7 7" />

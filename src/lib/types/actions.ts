@@ -7,7 +7,6 @@ export type ExplorerActionId =
   | "cut"
   | "copy"
   | "paste"
-  | "properties"
   | "open"
   | "refresh";
 
@@ -18,7 +17,6 @@ export type ExplorerActionIcon =
   | "cut"
   | "copy"
   | "paste"
-  | "properties"
   | "open"
   | "refresh";
 

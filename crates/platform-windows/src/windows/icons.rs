@@ -22,8 +22,19 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 static ICON_CACHE: OnceLock<Mutex<IconCacheState>> = OnceLock::new();
+static ICON_LOOKUP_HOOKS: OnceLock<Mutex<IconLookupHooks>> = OnceLock::new();
 const PATH_ICON_KEY_CACHE_LIMIT: usize = 4096;
 const ICON_BLOB_CACHE_LIMIT: usize = 1024;
+
+type SidebarIconLookupHook = dyn Fn(&str) -> Option<String> + Send + Sync;
+type DirectoryItemIconLookupHook =
+    dyn Fn(&str, &DirectoryItemKind) -> DirectoryItemIconLookup + Send + Sync;
+
+#[derive(Default)]
+struct IconLookupHooks {
+    sidebar: Option<Box<SidebarIconLookupHook>>,
+    directory_item: Option<Box<DirectoryItemIconLookupHook>>,
+}
 
 #[derive(Default)]
 struct IconCacheState {
@@ -46,7 +57,62 @@ pub struct DirectoryItemIconLookup {
     pub metrics: IconLookupMetrics,
 }
 
+pub struct IconLookupHookGuard;
+
+impl Drop for IconLookupHookGuard {
+    fn drop(&mut self) {
+        clear_icon_lookup_hooks();
+    }
+}
+
+pub fn install_icon_lookup_hooks<S, D>(sidebar_hook: S, directory_item_hook: D) -> IconLookupHookGuard
+where
+    S: Fn(&str) -> Option<String> + Send + Sync + 'static,
+    D: Fn(&str, &DirectoryItemKind) -> DirectoryItemIconLookup + Send + Sync + 'static,
+{
+    let hooks = ICON_LOOKUP_HOOKS.get_or_init(|| Mutex::new(IconLookupHooks::default()));
+    *hooks.lock().expect("icon lookup hook mutex should not be poisoned") = IconLookupHooks {
+        sidebar: Some(Box::new(sidebar_hook)),
+        directory_item: Some(Box::new(directory_item_hook)),
+    };
+
+    IconLookupHookGuard
+}
+
+fn run_sidebar_icon_lookup_hook(path: &str) -> Option<String> {
+    let hooks = ICON_LOOKUP_HOOKS.get_or_init(|| Mutex::new(IconLookupHooks::default()));
+    hooks
+        .lock()
+        .expect("icon lookup hook mutex should not be poisoned")
+        .sidebar
+        .as_ref()
+        .and_then(|hook| hook(path))
+}
+
+fn run_directory_item_icon_lookup_hook(
+    path: &str,
+    kind: &DirectoryItemKind,
+) -> Option<DirectoryItemIconLookup> {
+    let hooks = ICON_LOOKUP_HOOKS.get_or_init(|| Mutex::new(IconLookupHooks::default()));
+    hooks
+        .lock()
+        .expect("icon lookup hook mutex should not be poisoned")
+        .directory_item
+        .as_ref()
+        .map(|hook| hook(path, kind))
+}
+
+fn clear_icon_lookup_hooks() {
+    let hooks = ICON_LOOKUP_HOOKS.get_or_init(|| Mutex::new(IconLookupHooks::default()));
+    *hooks.lock().expect("icon lookup hook mutex should not be poisoned") =
+        IconLookupHooks::default();
+}
+
 pub fn icon_for_sidebar_path(path: &str) -> Option<String> {
+    if let Some(hooked) = run_sidebar_icon_lookup_hook(path) {
+        return Some(hooked);
+    }
+
     let key = icon_cache_key_for_path(path);
     let cache = ICON_CACHE.get_or_init(|| Mutex::new(IconCacheState::default()));
 
@@ -78,6 +144,7 @@ struct IconQuery {
     shell_query: String,
     attributes: u32,
     use_file_attributes: bool,
+    kind: DirectoryItemKind,
 }
 
 fn icon_query_for_item(path: &str, kind: &DirectoryItemKind) -> IconQuery {
@@ -86,21 +153,25 @@ fn icon_query_for_item(path: &str, kind: &DirectoryItemKind) -> IconQuery {
             shell_query: query_for_real_path(path),
             attributes: 0,
             use_file_attributes: false,
+            kind: DirectoryItemKind::Directory,
         },
         DirectoryItemKind::File => IconQuery {
             shell_query: query_for_real_path(path),
             attributes: 0,
             use_file_attributes: false,
+            kind: DirectoryItemKind::File,
         },
         DirectoryItemKind::Symlink => IconQuery {
             shell_query: query_for_real_path(path),
             attributes: 0,
             use_file_attributes: false,
+            kind: DirectoryItemKind::Symlink,
         },
         DirectoryItemKind::Other => IconQuery {
             shell_query: query_for_real_path(path),
             attributes: 0,
             use_file_attributes: false,
+            kind: DirectoryItemKind::Other,
         },
     }
 }
@@ -110,6 +181,10 @@ fn query_for_real_path(path: &str) -> String {
 }
 
 fn icon_from_item_query(path: &str, query: &IconQuery) -> DirectoryItemIconLookup {
+    if let Some(hooked) = run_directory_item_icon_lookup_hook(path, &query.kind) {
+        return hooked;
+    }
+
     let normalized_path_key = normalized_item_path_key(path);
     let cache = ICON_CACHE.get_or_init(|| Mutex::new(IconCacheState::default()));
 
@@ -394,6 +469,34 @@ mod tests {
 
         assert_eq!(query.shell_query, r"C:\Temp\Work");
         assert!(!query.use_file_attributes);
+    }
+
+    #[test]
+    fn sidebar_icon_lookup_hook_can_override_lookup() {
+        let _hook = install_icon_lookup_hooks(
+            |_| Some("hooked:sidebar".to_string()),
+            |_, _| DirectoryItemIconLookup {
+                icon_data_url: None,
+                metrics: IconLookupMetrics::default(),
+            },
+        );
+
+        assert_eq!(icon_for_sidebar_path(r"C:\"), Some("hooked:sidebar".to_string()));
+    }
+
+    #[test]
+    fn directory_item_icon_lookup_hook_can_override_lookup() {
+        let _hook = install_icon_lookup_hooks(
+            |_| None,
+            |path, kind| DirectoryItemIconLookup {
+                icon_data_url: Some(format!("{path}:{kind:?}")),
+                metrics: IconLookupMetrics::default(),
+            },
+        );
+
+        let lookup = hydrate_directory_item_icon(r"C:\Temp\notes.txt", &DirectoryItemKind::File);
+
+        assert_eq!(lookup.icon_data_url, Some("C:\\Temp\\notes.txt:File".to_string()));
     }
 
     #[test]
