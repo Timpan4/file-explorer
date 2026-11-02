@@ -1,5 +1,7 @@
 # File Explorer
 
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/Timpan4/file-explorer?utm_source=badge)
+
 Windows-first desktop file explorer with a Rust filesystem core and a thin Tauri/Svelte renderer.
 
 The goal is simple: feel like the file manager Windows should have shipped. It should be native-feeling, theme-aware, compact, calm, modern, and visibly faster than Files.
